@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Bootstrap Example</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>-->
+
+    <link href="js/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+    <script>
+        var app = angular.module('myApp', []);
+        app.controller('myCtrl', function ($scope) {
+            $scope.firstName = "John";
+            $scope.lastName = "Doe";
+            $scope.Load = function () {
+                $scope.Loadname = "glyphicon-refresh";
+                $scope.disabled = true;
+            }
+        });
+        app.controller('myCtrl2', function ($scope) {
+            $scope.firstName2 = "Saurabh pratap singh";
+
+        });
+        app.controller('myCtrl3', function ($scope) {
+            $scope.firstName3 = "arif khan";
+
+        });
+    </script>
+
+    <style>
+        .glyphicon-refresh-animate {
+            -animation: spin .7s infinite linear;
+            -webkit-animation: spin2 .7s infinite linear;
+        }
+
+        @-webkit-keyframes spin2 {
+            from {
+                -webkit-transform: rotate(0deg);
+            }
+
+            to {
+                -webkit-transform: rotate(360deg);
+            }
+        }
+
+        @keyframes spin {
+            from {
+                transform: scale(1) rotate(0deg);
+            }
+
+            to {
+                transform: scale(1) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div ng-app="myApp">
+        <div ng-controller="myCtrl">
+            <div>
+                First Name: <input type="text" ng-model="firstName"><br>
+                Last Name: <input type="text" ng-model="lastName"><br>
+                <br>
+                Full Name: {{firstName + " " + lastName}}
+                <br />
+                <button ng-click="Load()" class="btn btn-lg btn-warning" ng-disabled="disabled"><span class="glyphicon {{Loadname}} glyphicon-refresh-animate"></span> Loading</button>
+
+                <div ng-controller="myCtrl2">
+                    {{firstName2}}
+                    <br />
+                    <div ng-controller="myCtrl3">
+                        {{firstName3}}
+                    </div>
+                </div>
+                </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,127 @@
+   public string PaymentConfirmation(string paymentDate, string paymnetAmount ,string Fee ,string confirmationNumber ,string email)
+      {
+          double amount = Convert.ToDouble(paymnetAmount);
+          double amountFee = Convert.ToDouble(Fee);
+          double totalAmount = amount + amountFee;
+          DateTime dateTime = Convert.ToDateTime(paymentDate);
+          string date = dateTime.ToString("MM/dd/yyyy");
+          string message = string.Empty;
+          try
+          {
+              string body = @"<html>"+
+                              " <body>"+
+                             "<table width='100%' border='0' cellspacing='0' cellpadding='0' bgcolor='#fff'>"+
+                               "<tbody>"+
+                                 "<tr>"+
+                               "<td><table width='600' border='0' cellspacing='0' cellpadding='0' bgcolor='#FFFFFF' align=center style='border:1px solid #4a9dd4'>"+
+                                 "<tbody>"+
+                                  
+         
+            
+                                "<tr>"+
+                             "<td style='text-align: center; padding: 20px 10px;border-top: 3px solid #2185c5;'><a href='#' target=_blank><img src=cid:myImageID width='200' height='61' border='0' ></a></td>" +
+                                "</tr>"+
+            
+          
+                                " <tr>"+
+                               " <td width='100%' align='left' valign='top' style='padding:0px 20px 10px;'><table width='100%' border='0' cellspacing='0' cellpadding='0'>"+
+                                 "<tbody>"+
+                                 " <tr>"+
+                                 "<td height='25' align='left' valign='middle' ><font style='font-family: Arial, Helvetica, sans-serif; color:#353535; font-size:14px; font-weight:normal;'>Dear Customer,</font></td>"+
+                                 "  </tr>"+
+                                   "<tr>"+
+                                " <td height='25' align='left' valign='middle' ><font style='font-family: Arial, Helvetica, sans-serif; color:#353535; font-size:13px; font-weight:normal; line-height:22px;'> Greetings from MidAtlantic Finance Company!</font></td>"+
+                                " </tr>"+
+                               " <tr>"+
+                     " <td height=25 align='left' valign='middle' ><font style='font-family: Arial, Helvetica, sans-serif; color:#353535; font-size:13px; font-weight:normal; line-height:22px;'> We have received payment of $ " + totalAmount + " on " + date + ", your confirmation number is " + confirmationNumber + ".</font></td>" +
+                       "</tr>"+
+                    "<tr>"+
+                      "<td height='50' align='left' valign='middle' ><font style='font-family: Arial, Helvetica, sans-serif; color:#353535; font-size:13px; font-weight:normal; line-height:22px;'> Looking forward to more opportunities to be of service to you.</font></td>"+
+                    "</tr>"+
+                 " </tbody>"+
+                "</table>"+
+                "</td>"+
+            "</tr>"+
+           " <tr>"+
+              "<td width='100%' align='left' valign='top' style='padding:0px 20px 10px;'><table width='100%' border='0' cellspacing='0' cellpadding='0' style='margin-top:10px;'>"+
+                  "<tr>"+
+                    "<td height='25' align='left' valign='middle' ><font style='font-family: Arial, Helvetica, sans-serif; color:#353535; font-size:14px; line-height:22px;'>Thank you,<br/>"+
+                     " Mid-Atlantic Finance Company<br/>"+
+                      "Web Administrator<br/>"+
+                     " </font></td>"+
+                 " </tr>"+
+               " </table></td>"+
+                       "</tr>"+
+          
+                       "<tr>"+
+                      " <td>&nbsp;</td>"+
+                        "</tr>"+
+                         "</tbody>"+
+                      " </table></td>"+
+                            " </tr>"+
+                             "</tbody>"+
+                               "</table>"+
+                               " </body>"+
+                                "</html>";
+
+
+
+              //create an instance of new mail message
+              MailMessage mail = new MailMessage();
+
+              //set the HTML format to true
+              mail.IsBodyHtml = true;
+
+              //create Alrternative HTML view
+              AlternateView htmlView = AlternateView.CreateAlternateViewFromString(body, null, "text/html");
+
+              //Add Image
+              var filePath = System.Web.Hosting.HostingEnvironment.MapPath(@"~/Images/logo.png");
+              LinkedResource theEmailImage = new LinkedResource(filePath);
+              theEmailImage.ContentId = "myImageID";
+
+              //var filePath2 = System.Web.Hosting.HostingEnvironment.MapPath(@"~/Images/top_border.jpg");
+              //LinkedResource theEmailImage2 = new LinkedResource(filePath);
+              //theEmailImage2.ContentId = "myImageID2";
+
+
+
+              //Add the Image to the Alternate view
+              htmlView.LinkedResources.Add(theEmailImage);
+             // htmlView.LinkedResources.Add(theEmailImage2);
+
+              //Add view to the Email Message
+              mail.AlternateViews.Add(htmlView);
+
+              //set the "from email" address and specify a friendly 'from' name
+              mail.From = new MailAddress(ConfigurationManager.AppSettings["MailAddress"], "Payment");
+
+              //set the "to" email address
+              mail.To.Add("saurabhs6@chetu.com");
+
+              //set the Email subject
+              mail.Subject = "Payment received on your MAF Online Payment Account";
+
+              //set the SMTP info
+              SmtpClient smtp = new SmtpClient();
+              smtp.Host = ConfigurationManager.AppSettings["ServerAddress"];
+              smtp.Credentials = new System.Net.NetworkCredential(ConfigurationManager.AppSettings["MailAddress"], ConfigurationManager.AppSettings["MailPassword"]); // ***use valid credentials***
+              smtp.Port = Convert.ToInt32(ConfigurationManager.AppSettings["Port"]);
+
+              //Or your Smtp Email ID and Password
+              smtp.EnableSsl = Convert.ToBoolean(ConfigurationManager.AppSettings["EnableSsl"]);
+
+
+              //send the email
+              smtp.Send(mail);
+
+              message = "Mail sent successfully";
+          }
+          catch // (Exception exc)
+          {
+              message = "Make sure your account hasn't been registered already.";
+
+          }
+          return message;
+
+      }

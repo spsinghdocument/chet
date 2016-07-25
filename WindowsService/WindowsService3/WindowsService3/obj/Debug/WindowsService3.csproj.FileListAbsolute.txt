@@ -1,0 +1,8 @@
+E:\Rauf\New folder\WindowsService3\WindowsService3\bin\Debug\WindowsService3.exe.config
+E:\Rauf\New folder\WindowsService3\WindowsService3\bin\Debug\WindowsService3.exe
+E:\Rauf\New folder\WindowsService3\WindowsService3\bin\Debug\WindowsService3.pdb
+E:\Rauf\New folder\WindowsService3\WindowsService3\obj\Debug\WindowsService3.ProjectInstaller.resources
+E:\Rauf\New folder\WindowsService3\WindowsService3\obj\Debug\WindowsService3.csproj.GenerateResource.Cache
+E:\Rauf\New folder\WindowsService3\WindowsService3\obj\Debug\WindowsService3.exe
+E:\Rauf\New folder\WindowsService3\WindowsService3\obj\Debug\WindowsService3.pdb
+E:\Rauf\New folder\WindowsService3\WindowsService3\obj\Debug\WindowsService3.csprojResolveAssemblyReference.cache

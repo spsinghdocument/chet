@@ -1,0 +1,170 @@
+ ------------- class Program
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.ServiceProcess;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WindowsService3
+{
+    static class Program
+    {
+        /// <summary>
+        /// The main entry point for the application.
+        /// </summary>
+      static void Main()
+        {
+#if DEBUG
+            Service1 myservice = new Service1();
+            myservice.onDebug();
+            System.Threading.Thread.Sleep(System.Threading.Timeout.Infinite);
+#else
+
+            ServiceBase[] ServicesToRun;
+            ServicesToRun = new ServiceBase[] 
+            { 
+                new Service1() 
+            };
+            ServiceBase.Run(ServicesToRun);
+#endif
+        }
+    }
+}
+---------------- class Service1 ------------------------------
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Diagnostics;
+using System.Linq;
+using System.ServiceProcess;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WindowsService3
+{
+    public partial class Service1 : ServiceBase
+    {
+        public Service1()
+        {
+            InitializeComponent();
+        }
+
+        protected override void OnStart(string[] args)
+        {
+            FileWatcher f = new FileWatcher();
+           // sampleFileCreation();
+        }
+        public void onDebug()
+        {
+            OnStart(null);
+        }
+        private void sampleFileCreation()
+        {
+            //string sfile = @"D:\snr\vido\WINDOW SERVICE\sp.txt";
+            //string sDate = DateTime.Now.ToString();
+            //System.IO.StreamWriter oFileWriter = new System.IO.StreamWriter(sfile, true);
+            //oFileWriter.WriteLine("\n" + sDate);
+            //oFileWriter.Close();
+            System.IO.File.Create(AppDomain.CurrentDomain.BaseDirectory + "OnStart.txt");
+        }
+        protected override void OnStop()
+        {
+              System.IO.File.Create(AppDomain.CurrentDomain.BaseDirectory + "onStop.txt");
+        }
+    }
+}
+--------------------------------------------class Logger--------------------------------
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.IO;
+namespace WindowsService3
+{
+    class Logger
+    {
+        public static void Log(string message)
+        {
+            try
+            {
+                string _message = string.Format("{0} {1}", message,Environment.NewLine);
+                File.AppendAllText(AppDomain.CurrentDomain.BaseDirectory + "Logfile.txt",_message);
+            }
+            catch(Exception ex)
+            {
+
+            }
+        }
+    }
+}
+---------------------------------- class FileWatcher---------------
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WindowsService3
+{
+    class FileWatcher
+    {
+        private FileSystemWatcher  _fileWatcher;
+        public FileWatcher()
+        {
+            _fileWatcher = new FileSystemWatcher(pathlocation());
+            
+            _fileWatcher.Created += new FileSystemEventHandler(_fileWatcher_created);
+            _fileWatcher.Deleted += new FileSystemEventHandler(_fileWatcher_Deleted);
+            _fileWatcher.Changed += new FileSystemEventHandler(_fileWatcher_Changed);
+            _fileWatcher.EnableRaisingEvents = true;
+        }
+        private string pathlocation()
+        {
+            string value = string.Empty;
+
+            try
+            {
+                value = @"D:\snr\vido\WINDOW SERVICE";
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return value;
+        }
+
+        void _fileWatcher_created(object sender,FileSystemEventArgs e)
+        {
+            Logger.Log(string.Format("File created : path {0},name {1}", e.FullPath, e.Name));
+        }
+        void _fileWatcher_Deleted(object sender, FileSystemEventArgs e)
+        {
+            Logger.Log(string.Format("File Dleted : path {0},name {1}", e.FullPath, e.Name));
+        }
+        void _fileWatcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            Logger.Log(string.Format("File changed : path {0},name {1}", e.FullPath, e.Name));
+        }
+    }
+}
+------------------------------
+ProjectInstaller.cs[Design]------serviceProcessInstaller1---right click (Properties)---Account --"LocalSystem"
+And ---ServiceInstaller1-------serviceName = sp --- StartType---Automatic
+
+   
+ServiceInstaller Event click(AfterInstall)--------Autometic event------
+
+
+       private void serviceInstaller1_AfterInstall(object sender, InstallEventArgs e)
+        {
+            new ServiceController(serviceInstaller1.ServiceName).Start();
+        }

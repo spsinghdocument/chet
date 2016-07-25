@@ -1,0 +1,19 @@
+dbo.sp_TotalSale 'india,AMERICA,UAE-D'
+
+alter proc dbo.sp_TotalSale
+@Region varchar (500)
+as
+begin
+Declare @var_Region varchar(500)
+set @var_Region =Replace(@Region,',',''',''')
+--print @var_Region
+
+declare @sql Nvarchar(MAX)
+set @sql='select SNO,country,VALUE,TALK_VALUE into ##Temp from ADDTARIF where country in('''+ @var_Region +''')'
+--print @sql
+EXEC(@sql)
+select * from ##Temp
+drop table ##Temp
+end
+
+select SNO,country,VALUE,TALK_VALUE into ##Temp from ADDTARIF 

@@ -1,0 +1,115 @@
+Release------service1 Design (open)----mouse Right click---Add Installer---1 serviceProcessInstaller1--(Properties) Account = LocalSystem and start time -- Manual (but setup create --'Automatic')
+
+-- serviceInstaller1---(properties) serviceName ===  sp
+--CMD (Run AS administrator) open
+
+---Release
+
+
+--cd--              C:\Windows\Microsoft.NET\Framework\v4.0.30319\installutil.exe -i "E:\Rauf\New folder\WindowsService3\WindowsService3\bin\Release\WindowsService3.exe"
+
+--uninstall service
+
+ C:\Windows\Microsoft.NET\Framework\v4.0.30319\installutil.exe -u "E:\Rauf\New folder\WindowsService3\WindowsService3\bin\Release\WindowsService3.exe"
+
+----service open---
+
+
+titel bar --right click ----start task manger-------- click service -----services.. click----sp(right click)--start
+------------------------------------------Debug ---------
+
+
+--------------------'Automatic'------
+serviceProcessInstaller1 ---properties---- Event click (right me) ----Afterinstall ---
+--serviceProcessInstaller1--(Properties) Account = LocalSystem and start time -- Automatic
+
+
+
+
+
+
+          private void serviceInstaller1_AfterInstall(object sender, InstallEventArgs e)
+        {
+            new ServiceController(serviceInstaller1.ServiceName).Start();
+        }
+
+
+
+--------program.cs---
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.ServiceProcess;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WindowsService3
+{
+    static class Program
+    {
+        /// <summary>
+        /// The main entry point for the application.
+        /// </summary>
+        static void Main()
+        {
+#if DEBUG
+            Service1 myservice = new Service1();
+            myservice.onDebug();
+            System.Threading.Thread.Sleep(System.Threading.Timeout.Infinite);
+#else
+
+            ServiceBase[] ServicesToRun;
+            ServicesToRun = new ServiceBase[] 
+            { 
+                new Service1() 
+            };
+            ServiceBase.Run(ServicesToRun);
+#endif
+        }
+    }
+}
+--------------------------------------class Service1----------
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Diagnostics;
+using System.Linq;
+using System.ServiceProcess;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WindowsService3
+{
+    public partial class Service1 : ServiceBase
+    {
+        public Service1()
+        {
+            InitializeComponent();
+        }
+
+        protected override void OnStart(string[] args)
+        {
+            sampleFileCreation();
+        }
+        public void onDebug()
+        {
+            OnStart(null);
+        }
+        private void sampleFileCreation()
+        {
+            //string sfile = @"D:\snr\vido\WINDOW SERVICE\sp.txt";
+            //string sDate = DateTime.Now.ToString();
+            //System.IO.StreamWriter oFileWriter = new System.IO.StreamWriter(sfile, true);
+            //oFileWriter.WriteLine("\n" + sDate);
+            //oFileWriter.Close();
+            System.IO.File.Create(AppDomain.CurrentDomain.BaseDirectory + "OnStart.txt");
+        }
+        protected override void OnStop()
+        {
+            System.IO.File.Create(AppDomain.CurrentDomain.BaseDirectory + "onStop.txt");
+        }
+    }
+}

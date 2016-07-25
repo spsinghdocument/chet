@@ -1,0 +1,14 @@
+ var copyCurrentpassword = angular.copy($scope.Currentpassword);
+    var copyNewPassword = angular.copy($scope.NewPassword);
+    var copyConfirmNewPassword = angular.copy($scope.ConfirmNewPassword);
+
+
+.........
+$scope.reset = function ()
+{
+  $scope.Currentpassword = angular.copy(copyCurrentpassword);
+        $scope.NewPassword = angular.copy(copyNewPassword);
+        $scope.ConfirmNewPassword = angular.copy(copyConfirmNewPassword);
+
+        $scope.form.$setPristine();
+}

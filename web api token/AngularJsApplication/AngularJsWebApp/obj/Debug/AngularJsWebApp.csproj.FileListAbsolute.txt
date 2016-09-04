@@ -1,0 +1,12 @@
+c:\users\jt673115\documents\visual studio 2013\Projects\AngularJsApplication\AngularJsWebApp\bin\AngularJsWebApp.dll.config
+c:\users\jt673115\documents\visual studio 2013\Projects\AngularJsApplication\AngularJsWebApp\bin\AngularJsWebApp.dll
+c:\users\jt673115\documents\visual studio 2013\Projects\AngularJsApplication\AngularJsWebApp\bin\AngularJsWebApp.pdb
+c:\users\jt673115\documents\visual studio 2013\Projects\AngularJsApplication\AngularJsWebApp\obj\Debug\AngularJsWebApp.csprojResolveAssemblyReference.cache
+c:\users\jt673115\documents\visual studio 2013\Projects\AngularJsApplication\AngularJsWebApp\obj\Debug\AngularJsWebApp.dll
+c:\users\jt673115\documents\visual studio 2013\Projects\AngularJsApplication\AngularJsWebApp\obj\Debug\AngularJsWebApp.pdb
+C:\Users\sp_singh\Downloads\AngularJsApplication\AngularJsWebApp\bin\AngularJsWebApp.dll.config
+C:\Users\sp_singh\Downloads\AngularJsApplication\AngularJsWebApp\bin\AngularJsWebApp.dll
+C:\Users\sp_singh\Downloads\AngularJsApplication\AngularJsWebApp\bin\AngularJsWebApp.pdb
+C:\Users\sp_singh\Downloads\AngularJsApplication\AngularJsWebApp\obj\Debug\AngularJsWebApp.csprojResolveAssemblyReference.cache
+C:\Users\sp_singh\Downloads\AngularJsApplication\AngularJsWebApp\obj\Debug\AngularJsWebApp.dll
+C:\Users\sp_singh\Downloads\AngularJsApplication\AngularJsWebApp\obj\Debug\AngularJsWebApp.pdb

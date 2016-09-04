@@ -1,0 +1,200 @@
+========================================================web api ===========================================
+Microsoft.Owin.Security.OAuth
+
+
+Owin
+Update-package Microsoft.AspNet.WebApi
+Install-Package Microsoft.AspNet.Identity.Owin
+ Install-Package Microsoft.Owin.Host.SystemWeb
+Install-Package Microsoft.AspNet.Cors
+Newtonsoft.Json
+
+Install-Package Newtonsoft.Json -Version 6.0.8
+
+Owin ----all install----------------newget
+================================Web.config===========================
+  <runtime>
+    <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
+      <dependentAssembly>
+        <assemblyIdentity name="Microsoft.Owin" publicKeyToken="31bf3856ad364e35" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-3.0.1.0" newVersion="3.0.1.0" />
+      </dependentAssembly>
+
+
+      <dependentAssembly>
+        <assemblyIdentity name="Newtonsoft.Json" publicKeyToken="30ad4fe6b2a6aeed" culture="neutral" />
+        <bindingRedirect oldVersion="1.0.0.0-4.5.0.0" newVersion="6.0.8.0" />
+      </dependentAssembly>
+
+      <dependentAssembly>
+        <assemblyIdentity name="System.Web.Cors" publicKeyToken="31bf3856ad364e35" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-5.2.3.0" newVersion="5.2.3.0" />
+      </dependentAssembly>
+      <dependentAssembly>
+        <assemblyIdentity name="Microsoft.Owin.Security" publicKeyToken="31bf3856ad364e35" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-3.0.1.0" newVersion="3.0.1.0" />
+      </dependentAssembly>
+      <dependentAssembly>
+        <assemblyIdentity name="Microsoft.Owin.Security.OAuth" publicKeyToken="31bf3856ad364e35" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-3.0.1.0" newVersion="3.0.1.0" />
+      </dependentAssembly>
+      <dependentAssembly>
+        <assemblyIdentity name="Microsoft.Owin.Security.Cookies" publicKeyToken="31bf3856ad364e35" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-3.0.1.0" newVersion="3.0.1.0" />
+      </dependentAssembly>
+    </assemblyBinding>
+  </runtime>
+
+
+
+==================================
+add--- new  item--------owin startup class--------name-(Startup.cs)
+
+--------------------
+using Microsoft.Owin;
+using Microsoft.Owin.Security.OAuth;
+using Owin;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Http;
+
+namespace WebApplication42
+{
+    public class Startup
+    {
+        public static OAuthBearerAuthenticationOptions OAuthBearerOptions { get; private set; }
+        public void Configuration(IAppBuilder app)
+        {
+            HttpConfiguration config = new HttpConfiguration();
+
+            ConfigureOAuth(app);
+
+            WebApiConfig.Register(config);
+            app.UseCors(Microsoft.Owin.Cors.CorsOptions.AllowAll);
+            app.UseWebApi(config);
+        }
+
+        public void ConfigureOAuth(IAppBuilder app)
+        {
+            //use a cookie to temporarily store information about a user logging in with a third party login provider
+            OAuthBearerOptions = new OAuthBearerAuthenticationOptions();
+
+            OAuthAuthorizationServerOptions OAuthServerOptions = new OAuthAuthorizationServerOptions()
+            {
+
+                AllowInsecureHttp = true,
+                TokenEndpointPath = new PathString("/token"),
+                AccessTokenExpireTimeSpan = TimeSpan.FromMinutes(30),
+                Provider = new AuthorizationServerProvider(),
+            };
+
+            // Token Generation
+            app.UseOAuthAuthorizationServer(OAuthServerOptions);
+            app.UseOAuthBearerAuthentication(new OAuthBearerAuthenticationOptions()
+            {
+                AuthenticationMode = Microsoft.Owin.Security.AuthenticationMode.Active,
+                AuthenticationType = "Bearer"
+            });
+
+        }
+
+    }
+}
+--------------------------------------new class add (AuthorizationServerProvider.cs)===============================
+using Microsoft.Owin;
+using Microsoft.Owin.Security;
+using Microsoft.Owin.Security.OAuth;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WebApplication42
+{
+
+    public class AuthorizationServerProvider : OAuthAuthorizationServerProvider
+    {
+        public override Task ValidateClientAuthentication(OAuthValidateClientAuthenticationContext context)
+        {
+
+            context.Validated();
+            return Task.FromResult<object>(null);
+        }
+
+        public override async Task GrantResourceOwnerCredentials(OAuthGrantResourceOwnerCredentialsContext context)
+        {
+
+            var allowedOrigin = context.OwinContext.Get<string>("as:clientAllowedOrigin");
+
+            if (allowedOrigin == null) allowedOrigin = "*";
+
+            context.OwinContext.Response.Headers.Add("Access-Control-Allow-Origin", new[] { allowedOrigin });
+
+
+            // Validate your user and base on validation return claim identity or invalid_grant error
+            string user = context.UserName;
+            string password = context.Password;
+            // string ClientId = context.ClientId;
+
+            if (((user == "admin") && (password == "admin")) || ((user == "jignesh") && (password == "abc")))
+            {
+                var identity = new ClaimsIdentity(context.Options.AuthenticationType);
+                identity.AddClaim(new Claim(ClaimTypes.Name, context.UserName));
+                identity.AddClaim(new Claim(ClaimTypes.Role, "user"));
+                identity.AddClaim(new Claim("sub", context.UserName));
+
+                var props = new AuthenticationProperties(new Dictionary<string, string>
+                {
+                    { 
+                        "userNamehh", "ddddddddddddddddd"
+                    }
+                });
+
+                var ticket = new AuthenticationTicket(identity, props);
+                context.Validated(ticket);
+            }
+            else
+            {
+                context.SetError("invalid_grant", "The user name or password is incorrect.");
+                return;
+            }
+        }
+
+        public override Task TokenEndpoint(OAuthTokenEndpointContext context)
+        {
+            foreach (KeyValuePair<string, string> property in context.Properties.Dictionary)
+            {
+                context.AdditionalResponseParameters.Add(property.Key, property.Value);
+            }
+
+            return Task.FromResult<object>(null);
+        }
+
+    }
+}
+============================================add spController=================
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Web.Http;
+
+namespace WebApplication42.Controllers
+{
+    [Authorize]
+    public class spController : ApiController
+    {
+        [HttpGet]
+        public IHttpActionResult TestAuthorize()
+        
+        {
+            return Ok("saurabh pratap singh");
+        }
+    }
+}
+ 

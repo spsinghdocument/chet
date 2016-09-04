@@ -1,0 +1,208 @@
+=============================================angularjs=======================================
+
+=====================================================================login Controller=========================
+(function () {
+    'use strict';
+    app.controller('loginController', ['$scope', 'LoginService', '$location', function ($scope, loginService, $location) {
+
+        $scope.loginData = {
+            userName: "",
+            password: ""
+        };
+
+        $scope.login = function () {
+            loginService.login($scope.loginData.userName, $scope.loginData.password).then(function (response) {
+                if (response != null && response.error != undefined)
+                {
+                    $scope.message = response.error_description;
+                }
+                else {
+                    $location.path('/next');
+                }
+            });
+        }
+
+
+        $scope.next = function ()
+        {
+            debugger;
+            loginService.loginnext().then(function (response) {
+                
+            });
+        }
+
+    }]);
+})();
+============================================================================second controler =============
+(function () {
+
+'use strict';
+app.controller('indexController', ['$scope', '$location', 'authData','LoginService', function ($scope, $location, authData, loginService)
+ {
+
+    $scope.logOut = function ()
+ {
+       
+ loginService.logOut();
+       
+ $location.path('/home');
+   
+ }
+    $scope.authentication = authData.authenticationData;
+
+}]);
+
+})();
+==================================================next Controller==============================================================
+
+(function () 
+{
+
+    'use strict';
+  
+  app.controller('nextController', ['$scope', 'AuthenticationService', function ($scope, authenticationService)
+ {
+    
+    authenticationService.validateRequest();
+   
+ }]);
+})();
+=========================================================================Login Service ============================================================
+
+(function () {
+    'use strict';
+    app.service('LoginService', ['$http', '$q', 'AuthenticationService', 'authData',
+    function ($http, $q, authenticationService, authData) {
+        var userInfo;
+        var loginServiceURL = 'http://localhost:27475/' + 'token';
+        var deviceInfo = [];
+        var deferred;
+        var tosp = "";
+        this.login = function (userName, password) {
+            deferred = $q.defer();
+            debugger;
+            var data = "grant_type=password&username=" + userName + "&password=" + password ;
+            $http.post(loginServiceURL, data, {
+                headers:
+                   { 'Content-Type': 'application/x-www-form-urlencoded' }
+            }).success(function (response) {
+                debugger;
+                var o = response;
+                userInfo = {
+                    accessToken: response.access_token,
+                    userName: response.userName
+                };
+                authenticationService.setTokenInfo(userInfo);
+                authData.authenticationData.IsAuthenticated = true;
+                authData.authenticationData.userName = response.userName;
+                tosp = response.access_token;
+                deferred.resolve(null);
+            })
+            .error(function (err, status) {
+                debugger
+                authData.authenticationData.IsAuthenticated = false;
+                authData.authenticationData.userName = "";
+                deferred.resolve(err);
+            });
+            return deferred.promise;
+        }
+
+        this.logOut = function ()
+        {
+            authenticationService.removeToken();
+            authData.authenticationData.IsAuthenticated = false;
+            authData.authenticationData.userName = "";
+
+        }
+
+        ///////////////////////////////////////////
+
+        this.loginnext = function () {
+            deferred = $q.defer();
+
+            $http.get('http://localhost:27475/api/sp/TestAuthorize', {
+                headers:
+                   { 'Authorization': 'Bearer ' + tosp }
+            }).success(function (response) {
+                debugger;
+             
+                deferred.resolve(null);
+            })
+            .error(function (err, status) {
+                debugger
+                
+                deferred.resolve(err);
+            });
+            return deferred.promise;
+        }
+
+
+
+
+    }
+    ]);
+})();
+===============================================================================Authentication Service ==================================================
+(function () {
+    'use strict';
+    app.service('AuthenticationService', ['$http', '$q', '$window',
+        function ($http, $q, $window) {
+            var tokenInfo;
+
+            this.setTokenInfo = function (data) {
+                tokenInfo = data;
+                $window.sessionStorage["TokenInfo"] = JSON.stringify(tokenInfo);
+            }
+
+            this.getTokenInfo = function () {
+                return tokenInfo;
+            }
+
+            this.removeToken = function () {
+                tokenInfo = null;
+                $window.sessionStorage["TokenInfo"] = null;
+            }
+
+            this.init = function () {
+                if ($window.sessionStorage["TokenInfo"]) {
+                    tokenInfo = JSON.parse($window.sessionStorage["TokenInfo"]);
+                }
+            }
+
+            this.setHeader = function (http) {
+                delete http.defaults.headers.common['X-Requested-With'];
+                if ((tokenInfo != undefined) && (tokenInfo.accessToken != undefined) && (tokenInfo.accessToken != null) && (tokenInfo.accessToken != "")) {
+                    http.defaults.headers.common['Authorization'] = 'Bearer ' + tokenInfo.accessToken;
+                    http.defaults.headers.common['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';
+                }
+            }
+
+            this.validateRequest = function () {
+                var url = serviceBase + 'api/home';
+                var deferred = $q.defer();
+                $http.get(url).then(function () {
+                    deferred.resolve(null);
+                }, function (error) {
+                    deferred.reject(error);
+                });
+                return deferred.promise;
+            }
+
+            this.init();
+        }
+    ]);
+})();
+======================================================================factory ====================
+
+'use strict';
+app.factory('authData', [ function () {
+    var authDataFactory = {};
+
+    var _authentication = {
+        IsAuthenticated: false,
+        userName: ""
+    };
+    authDataFactory.authenticationData = _authentication;
+
+    return authDataFactory;
+}]);

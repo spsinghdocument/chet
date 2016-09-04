@@ -1,0 +1,208 @@
+-------------------ConTroler -----------
+ $scope.submit = function () {
+        var AccountNumbers = $scope.AccountNumber;
+      var CellNumber = $scope.CellNumber;      
+      var TextNumber = $scope.TextNumber;
+      var TextNumber2 = $scope.TextNumber2;
+      var Address = $scope.Address;
+      var Email = $scope.Email;
+      var Image = dataURItoBlob($scope.ImgFile);
+     //console.log(dataURItoBlob($scope.ImgFile));
+     //console.log($scope.ImgFile)
+
+      var UserConfirmationdata = { "AccountNumber": AccountNumbers, "CellNumber": CellNumber, "TextNumber": TextNumber, "TextNumber2": TextNumber2, "Address": Address, "Image": $scope.ImgFile, "Email": Email, "Image": "" };
+
+     userProfileFactory.UserInfoConfirm({ model: UserConfirmationdata, files: dataURItoBlob($scope.ImgFile) }, $scope.baseAddress).success(function (data) {
+         $scope.confirmation = "Submit Successfully";
+  
+     }).error(function (data) {
+         
+            $scope.confirmation = "Failed!";
+       });
+ }
+
+
+
+--------------------------------Factory -----------------------------------------
+ 
+app.factory('userProfileFactory', function ($http, $q) {
+    var url = "";
+    var userProfileFactory = {};
+
+
+  var UserInfoConfirm = function (collectionData, baseAddress) {
+
+        url = baseAddress + "/UserProfile/UpdateUserInfo";
+        //return $http.post(url, collectionData, {
+        //    transformRequest: angular.identity,
+        //    headers: {
+        //        'Content-Type': undefined
+        //    }
+        //});
+        return $http({
+            method: 'POST',
+            url: url,
+            //IMPORTANT!!! You might think this should be set to 'multipart/form-data' 
+            // but this is not true because when we are sending up files the request 
+            // needs to include a 'boundary' parameter which identifies the boundary 
+            // name between parts in this multi-part request and setting the Content-type 
+            // manually will not set this boundary parameter. For whatever reason, 
+            // setting the Content-type to 'false' will force the request to automatically
+            // populate the headers properly including the boundary parameter.
+            headers: { 'Content-Type': undefined },
+            //This method will allow us to change how the data is sent up to the server
+            // for which we'll need to encapsulate the model data in 'FormData'
+            transformRequest: function (data) {
+                //console.log(data)
+                var formData = new FormData();
+                //need to convert our json object to a string version of json otherwise
+                // the browser will do a 'toString()' on the object which will result 
+                // in the value '[Object object]' on the server.
+                formData.append("model", angular.toJson(data.model));
+                //now add all of the assigned files
+                formData.append("file", data.files);
+                return formData;
+            },
+            //Create an object that contains the model and files which will be transformed
+            // in the above transformRequest method
+            data: collectionData
+        });
+
+    }
+
+
+
+
+
+
+userProfileFactory.UserInfoConfirm = UserInfoConfirm;
+    return userProfileFactory;
+});
+
+-------------------------------------Cs--------------------------------------------------------
+
+         [HttpPost]
+            [Route("UpdateUserInfo")]
+            public async Task<HttpResponseMessage> UpdateUserInfo()
+            {
+                try
+                {
+                    Dictionary<string, string> extensionLookup = new Dictionary<string, string>()
+                    {
+                        {"image/png", ".png"},
+                        {"image/jpeg", ".jpeg"},
+                        {"image/gid", ".gif"}
+                    };
+
+                    if (!Request.Content.IsMimeMultipartContent())
+                    {
+                        throw new HttpResponseException(HttpStatusCode.UnsupportedMediaType);
+                    }
+
+                    var root = HttpContext.Current.Server.MapPath("~/images/uploads");
+                    var provider = new MultipartFormDataStreamProvider(root);
+                    var result = await Request.Content.ReadAsMultipartAsync(provider);
+                    if (result.FormData["model"] == null)
+                    {
+                        throw new HttpResponseException(HttpStatusCode.BadRequest);
+                    }
+
+                    var modelData = result.FormData["model"];
+
+                    UserProfileEntity model = JsonConvert.DeserializeObject<UserProfileEntity>(modelData);
+
+                    //get the files
+                    foreach (var fileData in result.FileData)
+                    {
+                        if (string.IsNullOrEmpty(fileData.Headers.ContentDisposition.FileName))
+            {                
+                            return Request.CreateResponse(HttpStatusCode.NotAcceptable, "This request is not properly formatted");
+                        }
+                        string fileName = fileData.Headers.ContentDisposition.FileName;
+
+                        fileName = Guid.NewGuid().ToString() + extensionLookup[fileData.Headers.ContentType.ToString()];
+                        model.Image = "~/images/uploads/"+fileName;
+                        File.Move(fileData.LocalFileName, Path.Combine(root, fileName));
+                    }                    
+                string message = string.Empty;
+                if (model == null)
+                {
+                    // Error message send
+                    message = string.Format(MAF.BAL.ResourceFile.Common.RequestInvalid);
+                  //  return (HttpStatusCode.BadRequest, message);
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, message);
+                }
+
+                if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.CellNumber) || string.IsNullOrWhiteSpace(model.Address) || string.IsNullOrWhiteSpace(model.AccountNumber))                   
+                {
+                    // Error message send
+                    message = string.Format(MAF.BAL.ResourceFile.Common.RequestInvalid);
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, message);
+                }
+                else
+                {
+                        IUserProfile.UpdateUserProfile(model.Email, model.CellNumber, model.TextNumber, model.TextNumber2, model.Address, model.AccountNumber,model.Image);
+                        return Request.CreateResponse(HttpStatusCode.OK);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteErrorLog("Error in User Profile Controller Save Details Action Method", ex);
+                    return null;
+                }
+            }
+            // This Post return the UPDATE  SECURITY QUESTIONS
+            
+            #endregion
+
+---------------------------------------------------HTML---------------------------------------------
+
+    <!-- image-preview-input -->
+                                        <div class="btn btn-default image-preview-input">
+                                            <span class="glyphicon glyphicon-folder-open"></span> <span class="image-preview-input-title">Browse</span>
+                                            <input type="file" accept="image/png, image/jpeg, image/jpg" name="input-file-preview" fileread="ImgFile" />
+                                            <!-- rename it -->
+                                        </div>
+-----------------------------------------------------------------------directive ------------------------------------
+
+//your directive
+app.directive("fileread", [
+  function () {
+      return {
+          scope: {
+              fileread: "="
+          },
+          link: function (scope, element, attributes) {
+              element.bind("change", function (changeEvent) {
+                  var reader = new FileReader();
+                  reader.onload = function (loadEvent) {
+                      scope.$apply(function () {
+                          scope.fileread = loadEvent.target.result;
+                      });
+                  }
+                  var ext = changeEvent.target.files[0].name.match(/\.(.+)$/)[1];
+                  if (angular.lowercase(ext) === 'jpg' || angular.lowercase(ext) === 'jpeg' || angular.lowercase(ext) === 'png') {
+                      if (changeEvent.target.files[0].size >= 2048000) {
+                          $('.image-error').text("File size must be less than 2MB.");
+                          $('.image-error').show();
+                          $('.image-preview-filename').val(null);
+                          element.val(null);
+                      }
+                      else {
+                          $('.image-error').hide();
+                          $('.image-preview-filename').val(changeEvent.target.files[0].name);
+                          reader.readAsDataURL(changeEvent.target.files[0]);
+                      }
+                  }
+                  else {
+                      $('.image-error').text("You can only select .png/.jpg/.jpeg file format.");
+                      $('.image-error').show();
+                      $('.image-preview-filename').val(null);
+                      element.val(null);
+                  }
+              });
+          }
+      }
+  }
+]);
+            

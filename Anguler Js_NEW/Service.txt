@@ -1,0 +1,89 @@
+----------------------------------Controller ---------------------------
+app.controller('LoanPaymentController', ['$scope', '$rootScope', '$location', 'LoanPaymentService', 'WebApiService', function ($scope, $rootScope, $location, LoanPaymentService, WebApiService) {
+
+    $scope.baseAddress = WebApiService.baseAddress;
+    $scope.AccountNumber = sessionStorage.getItem('AccountNumber');
+    $scope.loading = true;
+    (function () {
+        
+        LoanPaymentService.LoanPaymentGet($scope.AccountNumber, $scope.baseAddress).then(function (data) { LoanPayment(data); }, function (error) {
+          
+
+            if (error == "")
+            {
+              
+                $scope.Error = "Server connection problem";
+            }
+            else
+            {
+               
+                $scope.Error = error.Message;;
+            }
+
+           
+           
+        });
+    })();
+    function LoanPayment(data)
+    {
+      
+     
+        $scope.CurrentBalance =data.AcctCurrentBal;
+        $scope.AmountDue = data.AcctPastDueAmt == null ? "$0.00" : "$"+ data.AcctPastDueAmt;
+        $scope.DaysDue = data.AcctDaysPastDue;        
+        $scope.LastReferenceNumber = data.ConfirmationID == null ? "Not Available" : data.ConfirmationID;
+        $scope.LastTransactionDate = data.TranDate;
+        $scope.LastPayment = parseFloat(JSON.parse(data.TranPayment));
+        $scope.LastFee = parseFloat(JSON.parse(data.TranFee));
+        var lastTotalamount = $scope.LastPayment + $scope.LastFee;
+        $scope.LastTotalamount = isNaN(lastTotalamount) == true ? "$0.00" : "$" + lastTotalamount;
+        $rootScope.LastTotalamount = $scope.LastTotalamount;
+     
+        $scope.LastRouting = data.BankABA;
+        $scope.LastBankAccountNumber = data.BankAcctNo;
+
+        $scope.BankName = data.BankName;
+        $scope.BankHolde = data.BankHolder;
+        $scope.PaymentMethod = data.BankAcctType == "S" ? "Savings Account" : data.BankAcctType == "P" ? "Checking Personal" : "Not Available";
+        $scope.Status = data.Status;
+        $rootScope.BankHolde = $scope.BankHolde;
+        $rootScope.CurrentBalance = $scope.CurrentBalance;
+        $scope.PaymentFrequency = data.AcctFreq == "W" ? "Weekly" : data.AcctFreq == "M" ? "Monthly" : data.AcctFreq == "Y" ? "Yearly" : data.AcctFreq == "B" ? "Bi-Weekly" : data.AcctFreq == "S" ? "Semi-Monthly" : data.AcctFreq == "D" ? "Daily" : data.AcctFreq;
+        $rootScope.PaymentFrequency = $scope.PaymentFrequency;
+        var lastPaymentMade = data.BankAcctType == "S" ? "ACH - Savings Account" : data.BankAcctType == "P" ? "ACH - Checking Account" : "Not Available";
+        
+        sessionStorage.setItem('lastPaymentMade', lastPaymentMade);
+        $scope.loading = false;
+      //  $('.loadingOverlay').hide();
+        //sessionStorage.setItem('AccountHolder', $scope.BankHolde);
+       // sessionStorage.setItem('CurrentBalance', $scope.CurrentBalance);
+
+
+    }
+
+
+}]);
+
+---------------------------------------Service------------------------
+
+
+app.service('LoanPaymentService', function ($http, $q) {
+    var url = "";
+    this.LoanPaymentGet = function (acountNumber, baseAddress) {
+
+        url = baseAddress + "/LoanPayment/GetLoanPayment/" + acountNumber;
+        deferred = $q.defer();
+        $http.get(url).success(function (response) {
+            deferred.resolve(response);
+        })
+        .error(function (err, status) {
+            //deferred.reject(null);
+            deferred.reject(err);
+        });
+        return deferred.promise;
+
+    }
+
+
+});
+

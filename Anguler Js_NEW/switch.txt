@@ -1,0 +1,16 @@
+
+
+ <div class="nbt" ng-switch="showOptInSwitchWidget">
+
+<div ng-switch-when="OneTextNumberNoneOptedIn"></div>
+<div ng-switch-when="OneTextNumberOneOptedIn"></div>
+<div ng-switch-default></div>
+</div>
+==========================================
+$scope.showOptInSwitchWidget = '';
+
+
+ if (!isActiveFirst) 
+{
+                        $scope.showOptInSwitchWidget = 'OneTextNumberNoneOptedIn';
+   }

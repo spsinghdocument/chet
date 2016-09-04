@@ -1,0 +1,151 @@
+   
+          public string AchPaymentDelete(string BankAccountNumber)
+          {
+              string message = string.Empty;
+
+              try
+              {
+                  var Confirmation = new SqlParameter
+                  {
+                      ParameterName = "Confirmation",
+                      Value = string.Empty
+
+                  };
+                  var AcctNo = new SqlParameter
+                  {
+                      ParameterName = "AcctNo",
+                      Value = string.Empty
+                  };
+                  var TranPayment = new SqlParameter
+                  {
+                      ParameterName = "TranPayment",
+                      Value = string.Empty
+                  };
+                  var TranFee = new SqlParameter
+                  {
+                      ParameterName = "TranFee",
+                      Value = string.Empty
+                  };
+                  var BankABA = new SqlParameter
+                  {
+                      ParameterName = "BankABA",
+                      Value = string.Empty
+                  };
+                  var BankAcctNo = new SqlParameter
+                  {
+                      ParameterName = "BankAcctNo",
+                      Value = BankAccountNumber
+                  };
+                  var BankName = new SqlParameter
+                  {
+                      ParameterName = "BankName",
+                      Value = string.Empty
+                  };
+                  var BankHolder = new SqlParameter
+                  {
+                      ParameterName = "BankHolder",
+                      Value = string.Empty
+                  };
+                  var BankAcctType = new SqlParameter
+                  {
+                      ParameterName = "BankAcctType",
+                      Value = string.Empty
+                  };
+                  var UpdatedPhone = new SqlParameter
+                  {
+                      ParameterName = "UpdatedPhone",
+                      Value = string.Empty
+                  };
+                  var UpdatedPhoneDate = new SqlParameter
+                  {
+                      ParameterName = "UpdatedPhoneDate",
+                      Value = string.Empty
+                  };
+                  var SaveAccountFuture = new SqlParameter
+                  {
+                      ParameterName = "SaveAccountFuture",
+                      Value = string.Empty
+                  };
+                  var BankAccountName = new SqlParameter
+                  {
+                      ParameterName = "BankAccountName",
+                      Value = string.Empty
+                  };
+
+                  var ScheduleMethod = new SqlParameter
+                  {
+                      ParameterName = "ScheduleMethod",
+                      Value = string.Empty
+                  };
+                  var Email = new SqlParameter
+                  {
+                      ParameterName = "Email",
+                      Value = string.Empty
+                  };
+                  var Filter = new SqlParameter
+                  {
+                      ParameterName = "Filter",
+                      Value = "DeleteAchAutoPay"
+                  };
+
+                  var Message = new SqlParameter
+                  {
+
+                      ParameterName = "Message",
+                        DbType = System.Data.DbType.String,
+                        Size = 100,
+                       Direction = System.Data.ParameterDirection.Output
+                      
+                  };
+
+                  
+
+                  object[] parameters = new object[] { Confirmation, AcctNo, TranPayment, TranFee, BankABA, BankAcctNo, BankName, BankHolder, BankAcctType, UpdatedPhone, UpdatedPhoneDate, SaveAccountFuture, BankAccountName, ScheduleMethod, Email, Filter, Message };
+                  var PaymentConfirmationUser = dataCollection.AutoPayAchDeletePayment<PaymentConfirmationEntity>(parameters);
+                 
+                   object outParamValue = Convert.ToString(Message.Value);
+                   message = Convert.ToString( outParamValue);
+
+              }
+              catch (Exception ex)
+              {
+                  message = ex.Message;
+
+              }
+
+
+              return message;
+          }
+
+
+---------------------------------------------------------DataCollection =-----------------------------
+
+  // This stored procedure delete payment                  
+        public List<T> AutoPayAchDeletePayment<T>(params object[] parameters)
+        {
+
+            try
+            {
+                return _repository.SQLQuery<T>("exec sp_AutoPayAchPayOnlinePayment @Confirmation, @AcctNo, @TranPayment, @TranFee, @BankABA, @BankAcctNo, @BankName, @BankHolder, @BankAcctType, @UpdatedPhone, @UpdatedPhoneDate ,@SaveAccountFuture,@BankAccountName,@ScheduleMethod,@Email,@Filter,@Message OUT", parameters);
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+-------------------------------------------------Repository-------------
+
+
+         public List<T> SQLQuery<T>(string sql, params object[] parameters)
+        {
+            try
+            {
+                return db.Database.SqlQuery<T>(sql, parameters).ToList<T>();
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }

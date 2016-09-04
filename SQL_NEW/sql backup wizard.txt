@@ -1,0 +1,1 @@
+database ---Right click---Task--Generate Scripts---next---select ----next----Advanced---Type of data to script----(---)--ok---File hane

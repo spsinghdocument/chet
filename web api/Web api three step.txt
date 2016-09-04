@@ -1,0 +1,127 @@
+     [RoutePrefix("api/AutoPay")]
+     public class AutoPayController : ApiController
+     {
+#region GET Ach Detail
+         /// <summary>
+         /// Action method to GET Ach Detail
+         /// </summary>
+         /// <param name="AccountNumber"></param>
+         /// <returns></returns>
+         [HttpGet]
+         [Route("GETAchDetail/{AccountNumber:int}")]
+         public async Task<HttpResponseMessage> GETAchDetail(int AccountNumber)
+         {
+             try
+             {
+
+                 var AchDetail = new List<GetAchDetailEntity>();
+                 string message = string.Empty;
+                 if (string.IsNullOrWhiteSpace(Convert.ToString(AccountNumber)))
+                 {
+                     message = string.Format(MAF.BAL.ResourceFile.Common.RequestInvalid);
+                     // Error message send
+                     return Request.CreateErrorResponse(HttpStatusCode.BadRequest, message); 
+
+                 }
+                 else
+                 {
+                     // search account Information get
+                     AchDetail = IAutoPay.SaveAchDetail(Convert.ToString(AccountNumber));
+                     //send web api  account Information
+                     return Request.CreateResponse(HttpStatusCode.OK,AchDetail);
+                 }
+             }
+             catch (Exception ex)
+             {
+                 Logger.WriteErrorLog("Error in Autopay Controller Get Details Action Method", ex);
+                 return null;
+             }
+
+            
+         }
+         #endregion
+}
+--------------------------------------------------------
+
+  //Post the Login Account Verify
+        #region  Login Account Verify
+        [HttpPost]
+        [Route("LoginUser")]
+        public HttpResponseMessage POST(LoginEntity loginEntiy)
+        {
+            try
+            {
+                string message = string.Empty;
+                if (loginEntiy == null)
+                {
+                    // Error message send
+                    message = string.Format(MAF.BAL.ResourceFile.Common.RequestInvalid);
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, message);
+
+                }
+
+                if (string.IsNullOrWhiteSpace(loginEntiy.AccountNumber) || string.IsNullOrWhiteSpace(loginEntiy.Email) || string.IsNullOrWhiteSpace(loginEntiy.Password))
+                {
+                    // Error message send
+                    message = string.Format(MAF.BAL.ResourceFile.Common.RequestInvalid);
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, message);
+                }
+                else
+                {
+                    //Pass the parameter account number , Email and password into the Login 
+                    message = ILogin.UserLogin(loginEntiy);
+
+                    // Send web api  conformation into the Login
+                    return Request.CreateResponse(HttpStatusCode.OK, message);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteErrorLog("Error in Login Controller Login Post Action Method", ex);
+                return null;
+            }
+
+        }
+        #endregion
+
+
+       ------------------------------------
+
+    #endregion
+            #region UPDATE  SECURITY QUESTIONS
+            [HttpPost]
+            [Route("UpdateSecurityQuestion")]
+            public IHttpActionResult UpdateSecurityQuestion(ForgotConformationEntity model)
+            {
+                try
+                {
+                string message = string.Empty;
+                if (model == null)
+                {
+                     // Error message send
+                    message = string.Format(MAF.BAL.ResourceFile.Common.RequestInvalid);
+                    return BadRequest(message);
+
+                }
+
+
+                if (string.IsNullOrWhiteSpace(model.AccountNumber) || string.IsNullOrWhiteSpace(model.SecurityID) || string.IsNullOrWhiteSpace(model.Answer))
+                {
+                    // Error message send
+                    message = string.Format(MAF.BAL.ResourceFile.Common.RequestInvalid);
+                    return BadRequest(message);
+                }
+                else
+                {
+                    message = IUserProfile.UpdateSecurityQuestion(model);
+                    return Ok(message);
+                }
+            }
+                catch (Exception ex)
+                {
+                    Logger.WriteErrorLog("Error in User Profile Controller in Update Security Question Action Method", ex);
+                    return null;
+                }
+            }
+
+        #endregion

@@ -1,0 +1,127 @@
+----------------------------Controller--------------------
+
+
+
+
+app.controller('LoginController', ['$scope', '$rootScope', '$location', 'LoginFactory', 'WebApiService', function ($scope, $rootScope, $location, LoginFactory, WebApiService) {
+    $scope.onKeyPressResult = 0;
+
+    $scope.new =
+   {
+       collection: {}
+   };
+    (function () {
+
+        if ($rootScope.loggedIn == true)
+        {
+            $rootScope.loggedIn = false;
+            window.location.reload();
+        }
+
+
+    })();
+    $scope.baseAddress = WebApiService.baseAddress;
+ 
+    $scope.login = function () {
+        $scope.Loadname = "glyphicon-refresh";
+        $scope.btndisabled = true;
+       
+        LoginFactory.loginUser($scope.new.collection, $scope.baseAddress).then(function (data) {
+           
+            $scope.Loadname = "";
+            $scope.btndisabled = false;
+            var accountNumber = $scope.new.collection.AccountNumber;
+            var email = $scope.new.collection.Email;
+
+            obj = JSON.parse(data);
+            if (obj == "Successful Login")
+            {
+                $rootScope.loggedIn = true;
+                $rootScope.leftMenu = true;
+                $rootScope.userProfile = true;
+                $rootScope.hideMenu = "";
+                sessionStorage.setItem('AccountNumber', accountNumber);
+                sessionStorage.setItem('Email', email);
+
+                $location.path('/LoanPayment');
+            }
+            else if (obj == "Change Temporary Password")
+            {
+                $rootScope.loggedIn = true;
+                $rootScope.hideMenu = "";
+                sessionStorage.setItem('AccountNumber', accountNumber);
+
+
+                $location.path('/TemporaryPassword');
+
+            }
+
+            else
+            {
+                $scope.model = JSON.parse(data);
+            }
+
+        },
+         function (err)
+         {
+ 
+             if (err.Message == "The request is invalid")
+             {
+                 $scope.Loadname = "";
+                 $scope.btndisabled = false;
+                 $scope.model = err.Message;
+             }
+             else
+             {
+                 $scope.Loadname = "";
+                 $scope.btndisabled = false;
+                 $scope.model = "Server connection problem";
+             }
+         });
+
+
+
+        };
+
+
+   $scope.onKeyPress = function ($event)
+    {
+        if ($event.keyCode == 13)
+        {
+           
+            $scope.onKeyPressResult = $event.keyCode;
+           $scope.login();
+        }
+    };
+
+}]);
+
+
+--------------------------Factory---------------------------------------
+
+
+app.factory('LoginFactory', function ($http, $q) {
+    var url = "";
+    var loginServiceFactory = {};
+
+    var login = function (data, baseAddress) {
+       
+        var deferred = $q.defer();
+        url = baseAddress + "/Login/LoginUser";
+
+        $http.post(url, data).success(function (response)
+        {
+            deferred.resolve(response);
+
+        }).error(function (err, status)
+        {
+           
+            deferred.reject(err);
+        });
+
+        return deferred.promise;
+    };
+
+    loginServiceFactory.loginUser = login;
+    return loginServiceFactory;
+});

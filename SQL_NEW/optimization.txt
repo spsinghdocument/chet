@@ -1,0 +1,103 @@
+select chdate,simno,country INTO #delted from ChallanIn
+update ChallanIn set country = 'india'
+select chdate,simno,country INTO #inserted from ChallanIn
+
+select del.chdate ,ins.chdate from #delted del inner join #inserted ins on del.simno = ins.simno
+
+select * from #delted
+
+drop table #delted,#inserted
+
+---------------------------------------------using OUTPUT Clause-----------------------
+
+update ChallanIn set fkchallanoutid = fkchallanoutid+1 
+output inserted.simno,  inserted.chdate , deleted.fkchallanoutid [old price] ,inserted.fkchallanoutid [new price]
+-------------Getting row number---------------
+select row_number() over(order by fkchallanoutid) [sr no.], * from ChallanIn
+--------------------------------------select record with odd number -----------
+
+select * from 
+(
+select row_number() over(order by fkchallanoutid) [sr no.], * from ChallanIn
+) t1 where t1.[sr no.] % 2 =1
+
+---------------------- select record with even number ---------
+select * from 
+(
+select row_number() over(order by fkchallanoutid) [sr no.], * from ChallanIn
+) t1 where t1.[sr no.] % 2 =0
+
+------------------------------paging start --------------
+
+declare @PageSize int
+declare @PageNumber int
+declare @StartRecord int
+declare @EndRecord int
+
+set @PageSize =5
+set @PageNumber =2
+set @StartRecord = @PageNumber * @PageSize - @PageSize + 1
+set @EndRecord = @PageNumber * @PageSize 
+
+select * from 
+(
+select row_number() over(order by fkchallanoutid) [sr no.], * from ChallanIn
+) t1 where t1.[sr no.] between  @StartRecord and @EndRecord
+
+----------Ranking--------------------------
+select prod.productname,Rank() over(order by sum(quantity) desc) [Rank], sum(quantity)
+ [Total Sold] from [order details] od inner join products prod on prod.productid = od.productid group by prod.productname order by sum (quantity) desc
+ 
+ 
+------------------------USING Dense_Rank
+
+select prod.productname,DENSE_RANK() over(order by sum(quantity) desc) [Rank], sum(quantity)
+ [Total Sold] from [order details] od inner join products prod on prod.productid = od.productid group by prod.productname order by sum (quantity) desc
+ 
+ ------------------------customer sales Example ----------
+select cust.companyname, cust.customerid, sum (freight) (amount),
+(case when sum (freight) >= 1000 then 'Top List'
+when sum ( freight ) >=500 and sum(freight) < 1000 then 'Mid List'
+else 'Low List' end) 'Type'
+from orders ord 
+inner join customers cust on 
+cust.customerid = ord.customerid group by cust.companyname ,cust.customerid
+order by cust.companyname
+
+------------------------- max order------------
+select cust.companyname,max (orderid) from orders ord inner join customers cust on
+cust.customerid = ord.customerid group by cust.companyname
+
+----------------Highest Salary ---------------------------
+
+select * from tbemp t1 wher 1 = 
+( select (*) from tbem t2 where t2.empsal > t1.empsal)
+
+-------------------------------------using Case ----------------
+select companyname,
+(case
+when country = 'usa' then ' main office'
+when country = 'uk'  then 'main office'
+else country
+end) [office] from customers
+------------------------------------------------------- store proc (optmization)-------------------------
+alter proc 
+sp_ed
+as
+begin
+set NoCount on;
+select chdate,simno,country  from ChallanIn
+set NoCount off;
+end
+
+
+
+
+
+
+
+
+
+
+
+

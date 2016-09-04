@@ -1,0 +1,81 @@
+$scope.Amount = {
+        name: 'totalAmount'
+    };
+
+-------------------------------
+ var Amount = $scope.Amount.name == "totalAmount" ? $scope.TotalAmountDue : $scope.OtherAmount;
+----------------------
+$scope.SelectAmount = function () {
+       
+        if ($scope.Amount.name == "totalAmount")
+        {
+            $scope.disabled = true;
+            $scope.disabledPayoffTotalAmount = true;
+        }
+        if ($scope.Amount.name == "otherAmount") {
+            $scope.disabled = false;
+            $scope.disabledPayoffTotalAmount = true;
+        }
+        if ($scope.Amount.name == "PayoffTotalAmount") {
+            $scope.disabled = true;
+            $scope.disabledPayoffTotalAmount = false;
+        }
+
+    }
+--------------------------------------------------HTML 3 Radio buttion----------------------------
+<input type="radio" name="radiog_dark" id="radio4" class="css-checkbox" ng-change="SelectAmount()" data-ng-model="Amount.name" value="totalAmount" /><label for="radio4" class="css-label">Total Amount Due: ${{TotalAmountDue}}</label>
+                                    <label style="color:red">{{totalAmountError}}</label>
+                                    <div class="clearfix"></div>
+                                    <input type="radio" name="radiog_dark" id="radio5" class="css-checkbox" ng-change="SelectAmount()" data-ng-model="Amount.name" value="otherAmount" /><label for="radio5" class="css-label">Other Amount: $<input ng-click="removeOtereAmountError()" ng-disabled="disabled" type="text" ng-model="OtherAmount" class="label_input" /></label>
+                                    <label style="color:red">{{otereAmountError}}</label>
+                                    <div class="clearfix"></div>
+                                    
+                                    <input type="radio" name="radiog_dark" id="radio6" class="css-checkbox" ng-change="SelectAmount()" data-ng-model="Amount.name" value="PayoffTotalAmount" /><label for="radio6" class="css-label">Payoff Total Amount: ${{TotalPayoffAmmount}}  </label>
+                                    <label style="color:red">{{PayoffTotalAmountError}}</label>
+  
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++checkbox +++++++++++++++++++++++++++++++++   
+
+
+
+
+ $scope.checkboxFutureAccount =
+   {
+     value: false
+
+   };
+-------
+     $scope.checkboxFutureAccount.value = true
+
+-----------------------------HTML--------
+
+<div class=" col-lg-12 col-md-12 col-sm-12 col-xs-12 mar_btm10">
+
+                                            <div class="custom_check col-lg-12 col-md-12 col-sm-12 col-xs-12 pad_rt0 pad_lt20">
+                                                <input ng-model="checkboxFutureAccount.value" type="checkbox" id="c5"><label for="c5" class="font_color1">Save account information for future payment.</label>
+                                            </div>
+                                        </div     
+
+++++++++++++++++++++++++++++++++++++++++++++drop down +++++++++++++++++
+
+    (function () {
+      
+        RegisterFactory.GetSecurityQuestions().then(function (data) {
+            $scope.AllData = data.SecurityTable;
+           
+        }, function (err) { $scope.ErrorMessage = "Json Load problem"; })
+
+})();
+
+--------------------------HTML---------------------
+
+<div class="form-group">
+                            <label>SELECT YOUR SECURITY QUESTION 1<span class="font_red font12 line_ht0">*</span></label>
+                            <!--<input type="password" class="form-control" id="">-->
+                            <select class="form-control" name="singleSelect" id="singleSelect" ng-model="Register.collection.SecurityID" required>
+                                <option value="">---Please select---</option> <!-- not selected / blank option -->
+                                <option ng-repeat="x in AllData" value={{x.value}}>{{x.SecurityQuestions}}</option>
+                            </select>
+
+                            <span style="color:red" ng-show="form.singleSelect.$dirty && form.singleSelect.$error.required">Please SELECT YOUR SECURITY QUESTION 1</span>
+                        </div>

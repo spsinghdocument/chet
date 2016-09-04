@@ -1,0 +1,18 @@
+ create proc sp5
+  (
+    @itemtype varchar(200) = '',
+	@Msg varchar(100) output 
+	)
+	as
+	begin
+	set  @Msg = 'Record Insert Successfully..'
+	end
+
+//---------------------
+
+            Inventory_MVC2Entities db = new Inventory_MVC2Entities();
+
+            string Msg = string.Empty;
+            ObjectParameter opmg = new ObjectParameter("Msg", typeof(string));
+            db.sp5("sddfff", opmg);
+            Msg = Convert.ToString(opmg.Value);

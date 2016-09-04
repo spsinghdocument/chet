@@ -1,0 +1,23 @@
+onlinePaymentApp.service("shareData", ['$window', function ($window) {
+    var self = this;
+    var session = {};
+
+    self.setSession = function (data) {
+        session = data;
+        var s = JSON.stringify(data);
+        //console.log(session);
+        if (s != $window.sessionStorage.session)
+            $window.sessionStorage.session = s;
+    }
+
+    self.getSession = function () {
+        return session;
+    }
+
+    self.clearSession = function () {
+        session = {};
+        delete $window.sessionStorage.session;
+    }
+
+    self.setSession(angular.fromJson($window.sessionStorage.session));
+}]);

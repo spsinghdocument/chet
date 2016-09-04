@@ -1,0 +1,1427 @@
+___________________________________________D.A.L________________________________
+
+-----------------IRepository ------------------------
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace MAF.DAL
+{
+    public interface IRepository<T> where T : class
+    {
+        IEnumerable<T> GetAll();
+        T GetById(object Id);
+        void Insert(T obj);
+        void Update(T obj);
+        void Delete(Object Id);
+
+        List<T> SQLQuery<T>(string sql, params object[] parameters);
+         string SpExecuteSql(string sql, params object[] parameters);
+        void Save();
+    }
+}
+
+-------- Repository ---------------------
+
+
+using System;
+using System.Collections.Generic;
+using System.Data.Entity;
+using System.Linq;
+using System.Text;
+
+namespace MAF.DAL
+{
+    public class Repository<T> : IRepository<T> where T : class
+    {
+
+        private ReservesEntities1 db;
+        private DbSet<T> dbSet;
+
+        public Repository()
+        {
+            try
+            {
+                db = new ReservesEntities1();
+                dbSet = db.Set<T>();
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+        public IEnumerable<T> GetAll()
+        {
+            try
+            {
+                return dbSet.ToList();
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+
+        public T GetById(object Id)
+        {
+            try
+            {
+                return dbSet.Find(Id);
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+        public void Insert(T dbEntity)
+        {
+            try
+            {
+                dbSet.Add(dbEntity);
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+        public void Update(T dbEntity)
+        {
+            try
+            {
+                db.Entry(dbEntity).State = EntityState.Modified;
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+        public void Delete(object Id)
+        {
+            try
+            {
+                T getObjById = dbSet.Find(Id);
+                dbSet.Remove(getObjById);
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+        public void Save()
+        {
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (this.db != null)
+                {
+                    this.db.Dispose();
+                    this.db = null;
+                }
+            }
+        }
+
+
+         public List<T> SQLQuery<T>(string sql, params object[] parameters)
+        {
+            try
+            {
+                return db.Database.SqlQuery<T>(sql, parameters).ToList<T>();
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+        public string SpExecuteSql(string sql, params object[] parameters) 
+        {
+           string message = string.Empty;
+            try
+            {
+             
+              
+             var ExecuteSqlCommand =  db.Database.ExecuteSqlCommand(sql, parameters);
+             message =   "complete";
+            
+            }
+            catch(Exception ex)
+            {
+              message ="Error";
+            }
+            
+            return message;
+        }
+
+    }  
+}
+
+
+---------------IDataCollection -----------------------
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace MAF.DAL
+{
+    public interface IDataCollection
+    {
+        List<T> PaymentConfirmation<T>(params object[] parameters);
+        string SavePayment(params object[] parameters);
+        List<T> FindLastPaymen<T>(string accountNumber);
+         List<T> PayonlineRouting<T>(params object[] parameters);
+         List<T> ValidateTransaction<T>(string accountNumber);
+         List<T> PaymentHistory<T>(string accountNumber);
+         List<T> LastPaymen<T>(string accountNumber);
+         List<T> LoanPayment<T>(string accountNumber);
+         List<T> GetUserProfile<T>(params object[] parameters);
+         void UpdateUserProfile(params object[] parameters);
+         string UpdateSecurityQuestions(params object[] parameters);
+         string SaveSecurityToken(params object[] parameters);
+        List<T> GetSecurityToken<T>();
+        string SaveTextLog(params object[] parameters);
+        string OptInSubscriber(params object[] parameters);
+        string OptOutSubscriber(params object[] parameters);
+        List<T> GetSubscriberByAccountNumber<T>(params object[] parameters);
+        List<T> GetCardInfo<T>(params object[] parameters);
+        List<T> GetSearchPayment<T>(params object[] parameters);
+        List<T> DuplicatePayment<T>(params object[] parameters);
+    }
+}
+
+-------------------------------------DataCollection---------------------------
+
+
+using MAF.ENTITY;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace MAF.DAL
+{
+    public class DataCollection : IDataCollection
+    {
+          private IRepository<tblOnlineUser> _repository = null;
+        private ITextNotificationRepository<tblOnlineUser> textNotificationRepository = null;
+          string message = string.Empty;
+          public DataCollection()
+          {
+              this._repository = new Repository<tblOnlineUser>();
+            this.textNotificationRepository = new TextNotificationRepository<tblOnlineUser>();
+          }
+          // This stored procedure Verify account information
+        public List<T> PaymentConfirmation<T>(params object[] parameters)
+         {
+             try
+             {
+                 return _repository.SQLQuery<T>("exec sp_PayOnlineVerify @AcctNo,@LastName", parameters);
+             }
+             catch (Exception ex)
+             {
+                 throw;
+
+             }
+         }
+
+        // This stored procedure get search payment details
+        public  List<T> GetSearchPayment<T>(params object[] parameters)
+        {
+            try
+            {
+                
+                return _repository.SQLQuery<T>("exec USP_GetPaymentSchedule @Acctno", parameters);
+            }
+            catch(Exception ex)
+            {
+                throw;
+            }
+        }
+         // This stored procedure get bank routing number
+         public List<T> PayonlineRouting<T>(params object[] parameters)
+         {
+             try
+             {
+                 return _repository.SQLQuery<T>("exec sp_PayOnlineABA @ABA", parameters);
+             }
+             catch (Exception ex)
+             {
+                 throw;
+
+             }
+         }
+
+         // This stored procedure get user account details
+         public List<T> GetUserProfile<T>(params object[] parameters)
+         {
+             try
+             {
+                 return _repository.SQLQuery<T>("exec SP_GetUserProfile @accountNo", parameters);
+             }
+             catch (Exception ex)
+             {
+                 throw;
+
+             }
+
+         }
+
+         // This stored procedure get card account details
+         public List<T> GetCardInfo<T>(params object[] parameters)
+         {
+             try
+             {
+                 return _repository.SQLQuery<T>("exec sp_GetCardInfo @accountNo", parameters);
+             }
+             catch (Exception ex)
+             {
+                 throw;
+
+             }
+
+         }
+
+         // This stored procedure update user account details
+         public void UpdateUserProfile(params object[] parameters)
+         {
+             try
+             {
+                 _repository.SpExecuteSql("exec SP_UpdateUserProfile @Email ,@CellNumber, @TextNumber , @Address , @AccountNumber ,@ProfilePicture", parameters);
+             }
+             catch (Exception ex)
+             {
+                 throw;
+
+             }
+         }                                                      
+                                                                
+        // This stored procedure SECURITY QUESTIONS  Update details
+        public string UpdateSecurityQuestions(params object[] parameters)
+        {
+            try
+            {
+                return _repository.SpExecuteSql("exec sp_updateSecurityQuestions @AcctNo ,@SecurityID, @Answer , @SecurityID2 , @Answer2, @SecurityID3,@Answer3", parameters);
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+
+         // This stored procedure save payment                  
+        public string SavePayment(params object[] parameters)   
+        {
+            try
+            {
+                return _repository.SpExecuteSql("exec sp_PayOnlinePayment @Confirmation, @AcctNo, @TranPayment, @TranFee, @BankABA, @BankAcctNo, @BankName, @BankHolder, @BankAcctType, @UpdatedPhone, @UpdatedPhoneDate ,@SaveAccountFuture,@BankAccountName,@FuturePaymentDate,@ScheduleMethod", parameters);
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+        // Get Last payment Amount
+        public List<T> FindLastPaymen<T>(string accountNumber)
+        {
+            try
+            {
+                return _repository.SQLQuery<T>("Select TOP 1 BankHolder,SaveAccountFuture, BankAcctType, BankABA, BankAcctNo,BankAccountName From tblOnlinePayments Where AcctNo = '" + accountNumber + "' and BankAcctType IN(SELECT BankAcctType FROM tblOnlinePayments WHERE AcctNo = '" + accountNumber + "' and BankAcctType='P' OR BankAcctType='S') Order by ID Desc ");
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+        // Get validation maximum Transaction in payment
+        public List<T> ValidateTransaction<T>(string accountNumber)
+        {
+            try
+            {
+                return _repository.SQLQuery<T>("Select Count(ID) As TotTran,CAST ( Sum(TranPayment + TranFee)as varchar) As TotAmt From tblOnlinePayments Where AcctNo = '" + accountNumber + "' And CONVERT(VARCHAR(10), TranDate, 101) = CONVERT(VARCHAR(10), getDate(), 101)");
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+        // Get Payment History information
+        public List<T> PaymentHistory<T>(string accountNumber)
+        {
+            try
+            {
+                return _repository.SQLQuery<T>("Select ID, ConfirmationID,AcctNo,CAST( TranDate as varchar) as TranDate,CAST ( TranPayment as varchar) as TranPayment,CAST( TranFee as varchar) as TranFee,BankABA,BankAcctNo,BankName,BankHolder,BankAcctType,Status From tblOnlinePayments Where AcctNo = '" + accountNumber + "' AND Status <> 'Cancel' Order by ID Desc");
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+        // Get Last Payment Information
+        public List<T> LastPaymen<T>(string accountNumber)
+        {
+            try
+            {
+                return _repository.SQLQuery<T>("SELECT ID, ConfirmationID,AcctNo,CAST( TranDate as varchar) as TranDate,CAST ( TranPayment as varchar) as TranPayment,CAST( TranFee as varchar) as TranFee,BankABA,BankAcctNo,BankName,BankHolder,BankAcctType,Status FROM tblOnlinePayments where AcctNo ='" + accountNumber + "' AND  TranDate IN (SELECT max(TranDate) FROM tblOnlinePayments where AcctNo ='" + accountNumber + "') AND Status <> 'Cancel'");
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+        // Get Loan Payment and Account information 
+        public List<T> LoanPayment<T>(string accountNumber)
+        {
+            try
+            {
+                return _repository.SQLQuery<T>("IF EXISTS (SELECT CAST ((select AcctCurrentBal from tblAccounts where AcctNo ='" + accountNumber + "') as varchar)as AcctCurrentBal , CAST ((select AcctDaysPastDue from tblAccounts where AcctNo ='" + accountNumber + "') as varchar)as AcctDaysPastDue,CAST ((select AcctPastDueAmt from tblAccounts where AcctNo ='" + accountNumber + "') as varchar) as AcctPastDueAmt,  ConfirmationID,AcctNo,CAST( TranDate as varchar) as TranDate,CAST ( TranPayment as varchar) as TranPayment,CAST( TranFee as varchar) as TranFee,BankABA,BankAcctNo,BankName,BankHolder,BankAcctType,Status FROM tblOnlinePayments where AcctNo ='" + accountNumber + "' AND  TranDate IN (SELECT max(TranDate) FROM tblOnlinePayments where AcctNo ='" + accountNumber + "')  AND Status <> 'Cancel') BEGIN SELECT (select AcctFreq from tblAccounts where AcctNo ='" + accountNumber + "') as AcctFreq,   CAST ((select AcctCurrentBal from tblAccounts where AcctNo ='" + accountNumber + "') as varchar)as AcctCurrentBal , CAST ((select AcctDaysPastDue from tblAccounts where AcctNo ='" + accountNumber + "') as varchar)as AcctDaysPastDue,CAST ((select AcctPastDueAmt from tblAccounts where AcctNo ='" + accountNumber + "') as varchar) as AcctPastDueAmt,  ConfirmationID,AcctNo,CAST( TranDate as varchar) as TranDate,CAST ( TranPayment as varchar) as TranPayment,CAST( TranFee as varchar) as TranFee,BankABA,BankAcctNo,BankName,BankHolder,BankAcctType,Status FROM tblOnlinePayments where AcctNo ='" + accountNumber + "' AND  TranDate IN (SELECT max(TranDate) FROM tblOnlinePayments where AcctNo ='" + accountNumber + "')  AND Status <> 'Cancel' END ELSE BEGIN select (select AcctFreq from tblAccounts where AcctNo ='" + accountNumber + "') as AcctFreq, (select AcctNo from tblOnlineUsers where AcctNo ='" + accountNumber + "') as AcctNo,(select FullName from tblOnlineUsers where AcctNo ='" + accountNumber + "') as BankHolder , CAST ((select AcctCurrentBal from tblAccounts where AcctNo ='" + accountNumber + "') as varchar)as AcctCurrentBal , CAST ((select AcctDaysPastDue from tblAccounts where AcctNo ='" + accountNumber + "') as varchar)as AcctDaysPastDue,CAST ((select AcctPastDueAmt from tblAccounts where AcctNo ='" + accountNumber + "') as varchar) as AcctPastDueAmt from tblAccounts where AcctNo ='" + accountNumber + "' END");
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+        }
+
+        /// <summary>
+        /// Method to save security token in database
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="parameters">Object array of parameters</param>
+        /// <returns></returns>
+        public string SaveSecurityToken(params object[] parameters)
+        {
+            try
+            {
+                return textNotificationRepository.SpExecuteSql("exec SBTSaveSecurityToken @SecurityToken, @TokenExpireInMinutes", parameters);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Method to get security token from database
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public List<T> GetSecurityToken<T>()
+        {
+            try
+            {
+                return textNotificationRepository.SQLQuery<T>("exec SBTGetSecurityToken");
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Save text log for message opt-in/out
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="parameters">Parameters</param>
+        /// <returns></returns>
+        public string SaveTextLog(params object[] parameters)
+        {
+            try
+            {
+                return textNotificationRepository.SpExecuteSql("exec SBTInsertTextLog @AccountNumber, @TextNumber, @TextLogType, @TextLogEntry, @TextLogUserName", parameters);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Method to opt in
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="parameters">object array of parameters</param>
+        /// <returns></returns>
+        public string OptInSubscriber(params object[] parameters)
+        {
+            try
+            {
+                return textNotificationRepository.SpExecuteSql("exec SBTOptInSubscriber @AccountNumber, @TextNumber, @OptInIPAddress, @CreatedBy", parameters);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Method to Opt Out
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="parameters">object array of parameters</param>
+        /// <returns></returns>
+        public string OptOutSubscriber(params object[] parameters)
+        {
+            try
+            {
+                return textNotificationRepository.SpExecuteSql("exec SBTOptOutSubscriber @SubscriberID, @OptOutIPAddress, @ModifiedBy", parameters);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+        
+        /// <summary>
+        /// Method to Get Subscriber details
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="parameters">object array of parameters</param>
+        /// <returns></returns>
+        public List<T> GetSubscriberByAccountNumber<T>(params object[] parameters)
+        {
+            try
+            {
+                return textNotificationRepository.SQLQuery<T>("exec SBTGetSubscriberByAccount @AccountNumber", parameters);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        // This stored procedure get Duplicate Payment
+        public List<T> DuplicatePayment<T>(params object[] parameters)
+        {
+         
+            try
+            {
+                return _repository.SQLQuery<T>("exec sp_CheckDuplicatePayment @AcctNo", parameters);
+            }
+            catch (Exception ex)
+            {
+                throw;
+
+            }
+
+        }
+    
+    
+    }
+}
+
+---------------------------------------------------------B.A.L---------------------------
+
+---------IPayonline-----------------------------
+
+using MAF.ENTITY;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace MAF.BAL
+{
+    public interface IPayonline
+    {
+        PayonlineEntity accountInformationGet(string accountNumber);
+        FindLastPaymentEntity findLastPayment(string accountNumber);
+        RoutingNumberEntity AccountInformationNext(AccountInformationEntity accountInformation);
+        List<PaymentHistoryEntity> paymentHistory(string accountNumber);
+        PaymentHistoryEntity LastpaymentHistory(string accountNumber);
+        List<PaymentHistoryEntity> paymentHistorySearch(SearchPaymentEntity searchPayment);
+        List<SearchPaymentDetailsEntity> SearchPaymentDetails(string AccountNUmber, SearchPaymentEntity searchPayment);
+    }
+}
+
+--------------------------------------- Payonline -------------------------------------
+
+
+using MAF.DAL;
+using MAF.ENTITY;
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+
+namespace MAF.BAL
+{
+    public class Payonline : IPayonline
+    {
+    
+
+         private IDataCollection idata = null;
+         string bankName = string.Empty;
+          public Payonline()
+          {
+              this.idata = new DataCollection();
+          }
+          #region Account Information Get
+          public  PayonlineEntity accountInformationGet(string accountNumber)
+          {
+               var payonlineEntity = new PayonlineEntity();
+              try
+              {
+                  var AcctNo = new SqlParameter
+                  {
+                      ParameterName = "AcctNo",
+                      Value = accountNumber
+                  };
+                  var LastName = new SqlParameter
+                  {
+                      ParameterName = "LastName",
+                      Value = String.Empty
+                  };
+
+
+                  object[] parameters = new object[] { AcctNo, LastName};                        
+                  //var PayOnlineVerify = _repository.SQLQuery<sp_PayOnlineVerify_Result>("exec sp_PayOnlineVerify @AcctNo,@LastName", parameters);
+                  var PayOnlineVerify = idata.PaymentConfirmation<PayOnlineVerifyResultEntity>(parameters);
+                  if(PayOnlineVerify.Count >0)
+                   {
+                      // payonlineEntity.AccountNumber = PayOnlineVerify.Select(a => a.AcctNo).FirstOrDefault();
+                      // payonlineEntity.AccountHolder = PayOnlineVerify.Select(a => a.FullName).First().ToUpper().ToString();
+                      // payonlineEntity.CurrentBalance = String.Format("{0:c}",PayOnlineVerify.Select(a => a.AcctCurrentBal).First());
+                      // payonlineEntity.AmountPastDue = String.Format("{0:c}", PayOnlineVerify.Select(a => a.AcctPastDueAmt).First());
+                      // payonlineEntity.RegularAmountDue = String.Format("{0:c}", PayOnlineVerify.Select(a => a.AcctRegPayAmt).First());
+                      //payonlineEntity.OtherAmount = String.Format("{0:c}", PayOnlineVerify.Select(a => a.AcctRegPayAmt).First());
+                      // payonlineEntity.TotalAmountDue = String.Format("{0:c}", PayOnlineVerify.Select(a => a.AcctPastDueAmt).First());
+                      // payonlineEntity.AccountHolderPhoneNumber = PayOnlineVerify.Select(a => a.UpdatedPhone).First().ToString();
+
+
+                       foreach (PayOnlineVerifyResultEntity PayOnVerify in PayOnlineVerify)
+                       {
+                           payonlineEntity.AccountNumber = PayOnVerify.AcctNo;
+                           payonlineEntity.AccountHolder = PayOnVerify.FullName.ToUpper();
+                           payonlineEntity.CurrentBalance = String.Format("{0:c}", PayOnVerify.AcctCurrentBal);// Convert.ToString(PayOnVerify.AcctCurrentBal);   
+                           payonlineEntity.AmountPastDue = String.Format("{0:c}", PayOnVerify.AcctPastDueAmt); //Convert.ToString(PayOnVerify.AcctPastDueAmt);
+                           payonlineEntity.RegularAmountDue = String.Format("{0:c}", PayOnVerify.AcctRegPayAmt);// Convert.ToString(PayOnVerify.AcctRegPayAmt);
+                           payonlineEntity.OtherAmount = String.Format("{0:f}", PayOnVerify.AcctRegPayAmt);// Convert.ToString(PayOnVerify.AcctPastDueAmt);
+                           payonlineEntity.TotalAmountDue = String.Format("{0:f}", PayOnVerify.AcctPastDueAmt);
+                           payonlineEntity.AccountHolderPhoneNumber = PayOnVerify.UpdatedPhone;
+                           payonlineEntity.DueDate = Convert.ToString(PayOnVerify.AcctNextDueDate);
+                           payonlineEntity.LastBankAccountType = Convert.ToString(PayOnVerify.BankAcctType);
+                           payonlineEntity.LastTransactionFee = Convert.ToString(PayOnVerify.TranFee);
+                           payonlineEntity.LastTransactionPayment = Convert.ToString(PayOnVerify.TranPayment);
+                           payonlineEntity.TotalPayoffAmmount = String.Format("{0:f}", PayOnVerify.AcctPayOff);
+
+                       }
+                  
+                  
+                  
+                  }
+             
+              
+              }
+              catch(Exception ex)
+              {
+
+                  payonlineEntity.Error = "Logout";
+              }
+
+              return payonlineEntity;
+
+          }
+          #endregion
+
+          #region findLastPayment  acouunt number and routing
+          public FindLastPaymentEntity findLastPayment(string accountNumber)
+          {
+              var findLastPaymentEntity = new FindLastPaymentEntity();
+              try
+              {
+                  var BankRouting = idata.FindLastPaymen<FindLastPaymentEntity>(accountNumber);
+                  if (BankRouting.Count > 0)
+                  {
+                      findLastPaymentEntity.BankAcctNo = BankRouting.Select(a => a.BankAcctNo).First().ToString();
+                      findLastPaymentEntity.BankABA = BankRouting.Select(a => a.BankABA).First().ToString();
+                      findLastPaymentEntity.BankHolder = BankRouting.Select(a => a.BankHolder).First().ToString();
+                      findLastPaymentEntity.BankAcctType = BankRouting.Select(a => a.BankAcctType).First().ToString();
+                      findLastPaymentEntity.SaveAccountFuture = BankRouting.Select(a => a.SaveAccountFuture == null ? "" : a.SaveAccountFuture).First().ToString();
+                      findLastPaymentEntity.BankAccountName = BankRouting.Select(a => a.BankAccountName == null ? "" : a.BankAccountName).First().ToString();
+                  }
+                  else
+                  {
+                      findLastPaymentEntity.Error = MAF.BAL.ResourceFile.Common.RoutingNumberError;
+                  }
+              }
+              catch (Exception ex)
+              {
+                  throw;
+              }
+            return findLastPaymentEntity;
+          }
+          #endregion
+
+          #region   Get Routing number
+
+          public RoutingNumberEntity AccountInformationNext(AccountInformationEntity accountInformation)
+          {
+              var routingNumberEntity = new RoutingNumberEntity();
+              try
+              {
+                  byte op = validateTransaction(accountInformation.AccountNumber, accountInformation.Amount, accountInformation.CheckingAccountNumber);
+                  if (op == 0)
+                  {
+                      if (validateABA(accountInformation.Routing))
+                      {
+                          try
+                          {
+
+                              var ABA = new SqlParameter
+                              {
+                                  ParameterName = "ABA",
+                                  Value = accountInformation.Routing
+                              };
+
+                              object[] parameters = new object[] { ABA };
+
+                              var BankName = idata.PayonlineRouting<PayonlineRoutingEntity>(parameters);
+                              if (BankName.Count > 0)
+                              {
+                                  routingNumberEntity.BankName = BankName.Select(a => a.Name).First().ToString();
+
+
+                              }
+                              else
+                              {
+                                  routingNumberEntity.ErrorRouting = "Invalid Routing Number";
+                              }
+
+                          }
+                          catch (Exception ex)
+                          {
+                              routingNumberEntity.Error = "Account can't be verified";
+                          }
+
+
+                      }
+                      else
+                      {
+                          routingNumberEntity.ErrorRouting = "Invalid Routing Number";
+
+                      }
+
+                  }
+                  else
+                  {
+
+                      routingNumberEntity.Error = ShowValidationOutput(op);
+
+                  }
+
+              }
+              catch (Exception ex)
+              {
+                  throw;
+              }
+
+              return routingNumberEntity;
+          }
+          #endregion
+
+          #region   Validation
+
+          protected string ShowValidationOutput(byte op)
+          {
+              string ErrorMessage = string.Empty; 
+              try
+              {                  
+                  switch (op)
+                  {
+                      case 1:
+                          ErrorMessage = "Number of transactions per day exceeded (2 max)";
+                          break;
+
+                      case 2:
+                          ErrorMessage = "Maximum of $1000 per day has exceeded";
+                          break;
+
+                      case 3:
+                          ErrorMessage = "Logout";
+                          break;
+
+                      case 4:
+                          ErrorMessage = "Invalid checking account number. <BR/>Please enter your checking account number as it appears on your checks.";
+                          break;
+
+                      case 5:
+                          ErrorMessage = "Transaction Amount can't be zero";
+                          break;
+
+                  }
+              }
+              catch (Exception ex)
+              {
+                  throw;
+              }
+              return ErrorMessage;
+          }
+
+
+          protected bool validateABA(string aba)
+          {
+              int m1, m2, m3, m4, m5, m6, m7, m8, m9, mTotal;
+              double mSubValue;
+              double mCheckDigit;
+              try
+              {
+                  if (aba.Length == 9)
+                  {
+                      //http://www.quentinsagerconsulting.com/utilities/aba_online.php
+                      m1 = Convert.ToInt32(aba.Substring(0, 1)) * 3;
+                      m2 = Convert.ToInt32(aba.Substring(1, 1)) * 7;
+                      m3 = Convert.ToInt32(aba.Substring(2, 1)) * 1;
+                      m4 = Convert.ToInt32(aba.Substring(3, 1)) * 3;
+                      m5 = Convert.ToInt32(aba.Substring(4, 1)) * 7;
+                      m6 = Convert.ToInt32(aba.Substring(5, 1)) * 1;
+                      m7 = Convert.ToInt32(aba.Substring(6, 1)) * 3;
+                      m8 = Convert.ToInt32(aba.Substring(7, 1)) * 7;
+                      m9 = Convert.ToInt32(aba.Substring(8, 1));
+
+                      mTotal = m1 + m2 + m3 + m4 + m5 + m6 + m7 + m8;
+                      mSubValue = mTotal % 10;
+
+                      if (mSubValue > 0)
+                          mSubValue = (Convert.ToInt32(mTotal / 10) * 10) + 10;
+                      else
+                          mSubValue = (Convert.ToInt32(mTotal / 10) * 10);
+
+                      mCheckDigit = mSubValue - mTotal;
+
+                      if (mCheckDigit == m9)
+                          return true;
+                      else
+                          return false;
+                  }
+                  else
+                      return false;
+              }
+              catch (Exception ex)
+              {
+                  throw;
+
+              }
+          }
+
+
+          protected byte validateTransaction(string account, string amount ,string BankAcount)
+          {
+              byte result = 0;
+              int totalTransaction = 0;
+              double toAmount = 0;
+              try
+              {
+                  if (isCreditCard(BankAcount))
+                  {
+                      result = 4;
+                  }
+                  else
+                  {
+                      //if (Convert.ToDouble(amount) > 1000)
+                      //{
+                      //    result = 2;
+                      //}
+                      //else
+                      //{
+                      if (amount != "0.00")
+                      {
+                          var ValidateTransaction = idata.ValidateTransaction<ValidateTransactionEntity>(account);
+
+                          if (ValidateTransaction.Count > 0)
+                          {
+                              foreach (ValidateTransactionEntity transaction in ValidateTransaction)
+                              {
+                                  toAmount = Convert.ToDouble(transaction.TotAmt);
+                                  totalTransaction = Convert.ToInt32(transaction.TotTran);
+
+                              }
+
+
+                              if (totalTransaction < 2)
+                              {
+                                  if (totalTransaction > 0)
+                                      // if (toAmount + Convert.ToDouble(amount) > 1000)
+                                      //  result = 2;
+                                      result = 0;
+                              }
+                              else
+                                  result = 1;
+                          }
+
+                      }
+                      else
+                          result = 5;
+                  }
+                  // }
+              }
+              catch (Exception exc)
+              {
+                  //  lbTranAlert.Text = exc.Message;
+                  result = 3;
+              }
+              return result;
+          }
+
+          protected bool isCreditCard(string id)
+          { //// check whether input string is null or empty 
+              try
+              {
+                  if ((string.IsNullOrEmpty(id)) || (id.Length < 15))
+                  {
+                      return false;
+                  }
+                  int idLength = id.Length;
+                  int currentDigit;
+                  int idSum = 0;
+                  int currentProcNum = 0; //the current process number (to calc odd/even proc)
+
+                  for (int i = idLength - 1; i >= 0; i--)
+                  {
+                      //get the current rightmost digit from the string
+                      string idCurrentRightmostDigit = id.Substring(i, 1);
+
+                      //parse to int the current rightmost digit, if fail return false (not-valid id)
+                      if (!int.TryParse(idCurrentRightmostDigit, out currentDigit))
+                          return false;
+
+                      //double value of every 2nd rightmost digit (odd)
+                      //if value 2 digits (can be 18 at the current case),
+                      //then sumarize the digits (made it easy the by remove 9)
+                      if (currentProcNum % 2 != 0)
+                      {
+                          if ((currentDigit *= 2) > 9)
+                              currentDigit -= 9;
+                      }
+                      currentProcNum++; //increase the proc number
+
+                      //summarize the processed digits
+                      idSum += currentDigit;
+                  }
+
+                  //if digits sum is exactly divisible by 10, return true (valid), else false (not-valid)
+                  return (idSum % 10 == 0);
+              }
+              catch (Exception ex)
+              {
+                  throw;
+
+              }
+          }
+
+          #endregion
+
+          #region PaymentHistory
+          public List<PaymentHistoryEntity> paymentHistory(string accountNumber)
+          {
+     
+               var paymentHistory = idata.PaymentHistory<PaymentHistoryEntity>(accountNumber);
+               try
+               {
+                   Global.Instance.holder.AddOrUpdate(Convert.ToInt32(accountNumber), paymentHistory, (k, v1) => paymentHistory);
+               }
+               catch (Exception ex)
+               {
+                   throw;
+
+               }
+                       
+              return paymentHistory;
+        
+          }
+          #endregion
+
+          #region  Search Payment
+          public List<PaymentHistoryEntity> paymentHistorySearch(SearchPaymentEntity searchPayment)
+          {
+              var accountNumber = searchPayment.AccountNumber;
+              var paymentHistory = new List<PaymentHistoryEntity>();
+              try
+              {
+                  // yyyyMMddHHmmss
+
+                  DateTime fromDate = Convert.ToDateTime(searchPayment.FromDate); //.ToString("yyyyMMddHHmmss");
+
+                  DateTime toDate = Convert.ToDateTime(searchPayment.ToDate);
+
+                  if (Global.Instance.holder.ContainsKey(Convert.ToInt32(accountNumber)))
+                  {
+                      paymentHistory = Global.Instance.holder[Convert.ToInt32(accountNumber)].Where(a => Convert.ToDateTime(a.TranDate).Date >= fromDate.Date && Convert.ToDateTime(a.TranDate).Date <= toDate.Date).ToList();
+                      //  paymentHistory = Global.Instance.holder[Convert.ToInt32(accountNumber)].Where(a => Convert.ToDateTime(a.TranDate.is).Is).ToList();
+                  }
+
+                  // var paymentHistory = idata.PaymentHistory<PaymentHistoryEntity>(searchPayment.AccountNumber);
+                  // Global.Instance.holder.AddOrUpdate(Convert.ToInt32(accountNumber), paymentHistory, (k, v1) => paymentHistory);
+              }
+              catch (Exception ex)
+              {
+                  throw;
+
+              }
+              return paymentHistory;
+
+          }
+          #endregion
+
+          #region Get Search Payment Details
+          public List<SearchPaymentDetailsEntity> SearchPaymentDetails(string accountNumber, SearchPaymentEntity searchPayment)
+          {
+              var paymentDetails = new List<SearchPaymentDetailsEntity>();
+              try
+              {
+                  if (!string.IsNullOrEmpty(accountNumber))
+                  {
+                      var Acctno = new SqlParameter
+                      {
+                          ParameterName = "Acctno",
+                          Value = accountNumber
+                      };
+
+                      object[] parameters = new object[] { Acctno };
+                      paymentDetails = idata.GetSearchPayment<SearchPaymentDetailsEntity>(parameters);
+                      Global.Instance.searchPaymentHolder.AddOrUpdate(Convert.ToInt32(accountNumber), paymentDetails, (k, v1) => paymentDetails);
+                  }
+                  else
+                  {
+                      DateTime fromDate = Convert.ToDateTime(searchPayment.FromDate); //.ToString("yyyyMMddHHmmss");
+                      DateTime toDate = Convert.ToDateTime(searchPayment.ToDate);
+
+                      if (Global.Instance.searchPaymentHolder.ContainsKey(Convert.ToInt32(searchPayment.AccountNumber)))
+                      {
+                          paymentDetails = Global.Instance.searchPaymentHolder[Convert.ToInt32(searchPayment.AccountNumber)].Where(a => Convert.ToDateTime(a.CreatedDate).Date >= fromDate.Date && Convert.ToDateTime(a.CreatedDate).Date <= toDate.Date).ToList();
+                          //  paymentHistory = Global.Instance.holder[Convert.ToInt32(accountNumber)].Where(a => Convert.ToDateTime(a.TranDate.is).Is).ToList();
+                      }
+                  }
+                
+              }
+              catch (Exception ex)
+              {
+                  throw;
+
+              }
+              return paymentDetails;
+
+          }
+          #endregion
+
+          #region LastPaymentHistory
+          public PaymentHistoryEntity LastpaymentHistory(string accountNumber)
+          {
+              var lastPaymentHistoryEntity = new PaymentHistoryEntity();
+              try
+              {
+                  var lastPaymen = idata.LastPaymen<PaymentHistoryEntity>(accountNumber);
+                  if (lastPaymen.Count > 0)
+                  {
+
+                      lastPaymentHistoryEntity.ID = lastPaymen.Select(a => a.ID).FirstOrDefault();
+                      lastPaymentHistoryEntity.ConfirmationID = lastPaymen.Select(a => a.ConfirmationID).First().ToString();
+                      lastPaymentHistoryEntity.TranDate = lastPaymen.Select(a => a.TranDate).First().ToString();
+                      lastPaymentHistoryEntity.TranPayment = lastPaymen.Select(a => a.TranPayment).First().ToString();
+                      lastPaymentHistoryEntity.TranFee = lastPaymen.Select(a => a.TranFee).First().ToString();
+                      lastPaymentHistoryEntity.BankABA = lastPaymen.Select(a => a.BankABA).First().ToString();
+                      lastPaymentHistoryEntity.BankAcctNo = lastPaymen.Select(a => a.BankAcctNo).First().ToString();
+                      lastPaymentHistoryEntity.BankName = lastPaymen.Select(a => a.BankName).First().ToString();
+                      lastPaymentHistoryEntity.BankHolder = lastPaymen.Select(a => a.BankHolder).First().ToString();
+                      lastPaymentHistoryEntity.BankAcctType = lastPaymen.Select(a => a.BankAcctType).First().ToString();
+                      lastPaymentHistoryEntity.Status = lastPaymen.Select(a => a.Status).First().ToString();
+
+                  }
+              }
+              catch (Exception ex)
+              {
+                  throw;
+
+              }
+              return lastPaymentHistoryEntity;
+          }
+
+          #endregion
+
+
+        
+
+      
+
+    }
+
+}
+ ----------------------------------------------------Web API------------------------------------------------
+
+---------------------App_Start---------------------------Bootstrapper---------
+
+
+
+using Microsoft.Practices.Unity;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web.Http;
+using MAF.WEBAPI.Resolver;
+using MAF.BAL;
+using MAF.SolutionByText;
+
+namespace MAF.WEBAPI.App_Start
+{
+    public static class Bootstrapper
+    {
+
+        public static void Register(HttpConfiguration config)
+        {
+            var container = new UnityContainer();
+            container.RegisterType<ILogin, Login>(new HierarchicalLifetimeManager());
+            container.RegisterType<IAuthenticate, Authenticate>(new HierarchicalLifetimeManager());
+            container.RegisterType<IRegister, Register>(new HierarchicalLifetimeManager());
+            container.RegisterType<IForgotPassword, ForgotPassword>(new HierarchicalLifetimeManager());
+            container.RegisterType<IChangePassword, ChangePassword>(new HierarchicalLifetimeManager());
+            container.RegisterType<IPayonline, Payonline>(new HierarchicalLifetimeManager());
+            container.RegisterType<IPaymentConfirmation, PaymentConfirmation>(new HierarchicalLifetimeManager());
+            container.RegisterType<ILoanPayment, LoanPayment>(new HierarchicalLifetimeManager());
+            container.RegisterType<IUserProfile, UserProfile>(new HierarchicalLifetimeManager());
+            container.RegisterType<IDataContext, DataContext>(new HierarchicalLifetimeManager());
+            container.RegisterType<IGeneralService, GeneralService>(new HierarchicalLifetimeManager());
+            container.RegisterType<IMessageService, MessageService>(new HierarchicalLifetimeManager());
+            container.RegisterType<ISubscriberService, SubscriberService>(new HierarchicalLifetimeManager());
+      
+            config.DependencyResolver = new UnityResolver(container);
+        }
+    }
+} 
+
+--------------------------------------------------------PayonlineController ----------------------------------------
+
+
+
+using MAF.BAL;
+using MAF.ENTITY;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Web.Http;
+
+namespace MAF.WEBAPI.Controllers
+{
+    // create web api AccountInformation
+    [RoutePrefix("api/Payonline")]
+    public class PayonlineController : ApiController
+    {
+        // Get interface Account Information
+        private readonly IPayonline IPayonline;
+        //  This property datamember is used to create object of Account Information
+        PayonlineEntity payonlineEntity = null;
+        //  This property datamember is used to create object of routing number
+        RoutingNumberEntity routingNumberEntity = null;
+        public PayonlineController(IPayonline iPayonline)
+        {
+            // Create object Payonline(Account Information)
+            IPayonline = iPayonline;
+           
+        }
+
+        #region Account Information Get
+        //Get the Account Information  function
+        [HttpGet]
+         [Route("GET/{AccountNumber:int}")]
+        public IHttpActionResult GET(int AccountNumber)
+        {
+            try
+            {
+                //  This private datamember is used to create object of Account Information
+                payonlineEntity = new PayonlineEntity();
+
+
+                string message = string.Empty;
+                if (string.IsNullOrWhiteSpace(Convert.ToString(AccountNumber)))
+                {
+                    message = string.Format(MAF.BAL.ResourceFile.Common.RequestInvalid);
+                    // Error message send
+                    return BadRequest(message);
+
+                }
+                else
+                {
+                    // search account Information get
+                    payonlineEntity = IPayonline.accountInformationGet(Convert.ToString(AccountNumber));
+                    //send web api  account Information
+                    return Ok(payonlineEntity);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteErrorLog("Error in PayOnline Controller Get Details Action Method", ex);
+                return null;
+            }
+        }
+        #endregion
+
+        #region findLastPayment  acouunt number and routing
+        // Get find Last Payment  acouunt number and routing of payment
+        [HttpGet]
+         [Route("findLastPayment/{AccountNumber:int}")]
+         public IHttpActionResult findLastPayment(int AccountNumber)
+         {
+             try
+             {
+                 // This property is used to create object of Account Information class and  object 
+                 var findLastPaymentEntity = new FindLastPaymentEntity();
+
+
+
+                 if (string.IsNullOrWhiteSpace(Convert.ToString(AccountNumber)))
+                 {
+                     string message = string.Format(MAF.BAL.ResourceFile.Common.RequestInvalid);
+                     // Error message send
+                     return BadRequest(message);
+
+                 }
+                 else
+                 {
+                     //Pass the parameter account number into the Find Last Payment
+                     findLastPaymentEntity = IPayonline.findLastPayment(Convert.ToString(AccountNumber));
+                     //send web api Last Payment  acouunt number and routing of payment
+                     return Ok(findLastPaymentEntity);
+                 }
+             }
+             catch (Exception ex)
+             {
+                 Logger.WriteErrorLog("Error in PayOnline Controller Find Lat Payment Action Method", ex);
+                 return null;
+             }
+         }
+        #endregion
+
+        #region Get RoutingNumber
+        //  find Get Routing Number
+        [HttpPost]
+         [Route("post")]
+         public IHttpActionResult post(AccountInformationEntity accountInformation)
+         {
+             try
+             {
+                 if (accountInformation == null)
+                 {
+                     string message = string.Format(MAF.BAL.ResourceFile.Common.RequestInvalid);
+                     // Error message send
+                     return BadRequest(message);
+
+                 }
+
+
+                 if (string.IsNullOrWhiteSpace(accountInformation.AccountNumber) || string.IsNullOrWhiteSpace(accountInformation.CheckingAccountNumber) || string.IsNullOrWhiteSpace(accountInformation.Amount) || string.IsNullOrWhiteSpace(accountInformation.Routing))
+                 {
+                     string message = string.Format(MAF.BAL.ResourceFile.Common.RequestInvalid);
+                     // Error message send
+                     return BadRequest(message);
+                 }
+                 else
+                 {
+                     //Pass the parameter value into the routing number verify
+                     routingNumberEntity = IPayonline.AccountInformationNext(accountInformation);
+                     //send web api into Account Information
+                     return Ok(routingNumberEntity);
+                 }
+             }
+             catch (Exception ex)
+             {
+                 Logger.WriteErrorLog("Error in PayOnline Controller in Get Routing Number Action Method", ex);
+                 return null;
+             }
+         }
+         #endregion
+         
+        #region PaymentHistory
+        //Get the Payment History  function  
+         [HttpGet]
+         [Route("PaymentHistory/{AccountNumber:int}")]
+         public IHttpActionResult PaymentHistory(int AccountNumber)
+         {
+             try
+             {
+                 // This property is used to create object of Payment History and  list of Payment History model
+                 var allOldPayment = new List<PaymentHistoryEntity>();
+
+                 if (string.IsNullOrWhiteSpace(Convert.ToString(AccountNumber)))
+                 {
+                     // Error message send
+                     return NotFound();
+                 }
+                 else
+                 {
+                     // Get the Payment History
+                     allOldPayment = IPayonline.paymentHistory(Convert.ToString(AccountNumber));
+                     // send Payment History into web api
+                     return Ok(allOldPayment);
+                 }
+             }
+             catch (Exception ex)
+             {
+                 Logger.WriteErrorLog("Error in PayOnline Controller in Get Payment History Action Method", ex);
+                 return null;
+             }
+         }
+        #endregion
+         //Get the Last Payment History  function 
+         #region LastPaymentHistory
+         [HttpGet]
+         [Route("LastpaymentHistory/{AccountNumber:int}")]
+         public IHttpActionResult LastpaymentHistory(int AccountNumber)
+         {
+             try
+             {
+                 // This property is used to create object of Last Payment History .
+                 var lastPyament = new PaymentHistoryEntity();
+
+                 if (string.IsNullOrWhiteSpace(Convert.ToString(AccountNumber)))
+                 {
+                     // Error message send
+                     return NotFound();
+                 }
+                 else
+                 {
+                     lastPyament = IPayonline.LastpaymentHistory(Convert.ToString(AccountNumber));
+                     // send last  Payment  into web api
+                     return Ok(lastPyament);
+                 }
+             }
+             catch (Exception ex)
+             {
+                 Logger.WriteErrorLog("Error in PayOnline Controller in Last Payment History Action Method", ex);
+                 return null;
+             }
+         }
+
+           #endregion
+
+         #region Search Payment
+         //Search Payment  function 
+         [HttpPost]
+         [Route("PaymentSearch")]
+         public IHttpActionResult PaymentSearch(SearchPaymentEntity searchPayment)
+         {
+             try
+             {
+                 var Payment = new List<PaymentHistoryEntity>();
+
+                 if (string.IsNullOrWhiteSpace(searchPayment.AccountNumber) || string.IsNullOrWhiteSpace(searchPayment.FromDate) || string.IsNullOrWhiteSpace(searchPayment.ToDate))
+                 {
+                     // Error message send
+                     return NotFound();
+                 }
+                 else
+                 {
+                     // Search and send Payment History into web api
+                     Payment = IPayonline.paymentHistorySearch(searchPayment);
+
+                     return Ok(Payment);
+                 }
+             }
+             catch (Exception ex)
+             {
+                 Logger.WriteErrorLog("Error in PayOnline Controller in Payment Search Action Method", ex);
+                 return null;
+             }
+         }
+         #endregion
+
+
+         #region GetSearchPaymentDetails
+         //Search Payment  function 
+         [HttpGet]
+         [Route("GetSearchPaymentDetails/{AccountNumber:int}")]
+         public IHttpActionResult GetSearchPaymentDetails(int AccountNumber)
+         {
+             try
+             {
+                 string accountNumber = Convert.ToString(AccountNumber);
+                 var Payment = new List<SearchPaymentDetailsEntity>();
+                 SearchPaymentEntity search = new SearchPaymentEntity();
+                 if (string.IsNullOrWhiteSpace(accountNumber))
+                 {
+                     // Error message send
+                     return NotFound();
+                 }
+                 else
+                 {
+                     // Search and send Payment History into web api
+                     Payment = IPayonline.SearchPaymentDetails(accountNumber, search);
+
+                     return Ok(Payment);
+                 }
+             }
+             catch (Exception ex)
+             {
+                 Logger.WriteErrorLog("Error in PayOnline Controller in Get SearchPayment Details Get Action Method", ex);
+                 return null;
+             }
+         }
+         #endregion
+
+         #region Post Search Payment Schedule
+         //Search Payment  function 
+         [HttpPost]
+         [Route("SearchPaymentDetails")]
+         public IHttpActionResult SearchPaymentDetails(SearchPaymentEntity searchPayment)
+         {
+             try
+             {
+                 string accountNumber = null;
+                 var Payment = new List<SearchPaymentDetailsEntity>();
+                 if (string.IsNullOrWhiteSpace(searchPayment.AccountNumber))
+                 {
+                     // Error message send
+                     return NotFound();
+                 }
+                 else
+                 {
+                     // Search and send Payment History into web api
+                     Payment = IPayonline.SearchPaymentDetails(accountNumber, searchPayment);
+
+                     return Ok(Payment);
+                 }
+             }
+             catch (Exception ex)
+             {
+                 Logger.WriteErrorLog("Error in PayOnline Controller in Get SearchPayment Details Post Action Method", ex);
+                 return null;
+             }
+         }
+         #endregion
+
+
+    }
+
+
+
+
+}

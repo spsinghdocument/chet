@@ -1,0 +1,14 @@
+                    DlrAcctNo = PaymentConfirmationFee.Select(aa => aa.DlrAcctNo).FirstOrDefault();
+                    State = PaymentConfirmationFee.Select(aa => aa.State).FirstOrDefault();
+
+                    var filePath = System.Web.Hosting.HostingEnvironment.MapPath(@"~/DealerFee.xml");
+                    XElement xelement = XElement.Load(filePath);
+                    var DealerFee = from address in xelement.Elements("Dealer")
+                                    where (string)address.Element("dealerAccountNumber") == Convert.ToString( DlrAcctNo)
+                                    select new { fee = address.Element("fee").Value }.fee;
+
+                    if (DealerFee.FirstOrDefault() != null)
+                    {
+                        fee = DealerFee.FirstOrDefault();
+
+                    }
